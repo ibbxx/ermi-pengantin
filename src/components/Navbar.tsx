@@ -39,11 +39,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
           ? 'bg-ivory/90 backdrop-blur-md shadow-sm border-b border-gold-light/20 py-3'
           : 'bg-transparent py-5'
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
@@ -61,11 +60,10 @@ export default function Navbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`text-sm tracking-wide transition-colors duration-200 ${
-                  isActive(item.href)
+                className={`text-sm tracking-wide transition-colors duration-200 ${isActive(item.href)
                     ? 'text-gold-dark font-medium border-b-2 border-gold-dark/80 pb-1'
                     : 'text-charcoal-light hover:text-gold-dark pb-1'
-                }`}
+                  }`}
               >
                 {item.name}
               </Link>
@@ -116,9 +114,8 @@ export default function Navbar() {
 
       {/* Mobile Menu Drawer */}
       <div
-        className={`md:hidden fixed inset-y-0 right-0 max-w-xs w-full bg-ivory shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`md:hidden fixed inset-y-0 right-0 max-w-xs w-full bg-ivory shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         <div className="flex justify-between items-center p-5 border-b border-gold-light/20">
           <span className="text-xl font-serif font-bold text-charcoal">Menu</span>
@@ -135,9 +132,8 @@ export default function Navbar() {
               key={item.name}
               href={item.href}
               onClick={() => setIsOpen(false)}
-              className={`text-base font-medium py-2 border-b border-gray-100 ${
-                isActive(item.href) ? 'text-gold-dark' : 'text-charcoal hover:text-gold-dark'
-              }`}
+              className={`text-base font-medium py-2 border-b border-gray-100 ${isActive(item.href) ? 'text-gold-dark' : 'text-charcoal hover:text-gold-dark'
+                }`}
             >
               {item.name}
             </Link>

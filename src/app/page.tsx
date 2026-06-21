@@ -5,8 +5,6 @@ import Link from 'next/link';
 import {
   Calendar,
   Sparkles,
-  Award,
-  Users,
   Star,
   ShieldCheck,
   Check,
@@ -23,12 +21,7 @@ export default function Home() {
   // FAQ toggle state
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const stats = [
-    { label: 'Pasangan Bahagia', value: '1.200+', icon: Users },
-    { label: 'Koleksi Gaun Premium', value: '150+', icon: Sparkles },
-    { label: 'Paket Pernikahan', value: '25+', icon: Award },
-    { label: 'Rating Pelanggan', value: '4.9/5', icon: Star },
-  ];
+
 
   const services = [
     {
@@ -101,7 +94,7 @@ export default function Home() {
     <div className="space-y-24 pb-20">
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden -mt-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-20">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1920&q=80"
@@ -144,23 +137,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. STATS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-36 relative z-20">
-        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gold-light/20 grid grid-cols-2 md:grid-cols-4 gap-8 glass">
-          {stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <div key={i} className="text-center space-y-2 flex flex-col items-center">
-                <div className="w-10 h-10 bg-champagne text-gold-dark rounded-full flex items-center justify-center mb-1">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="text-2xl md:text-3xl font-extrabold text-charcoal">{stat.value}</div>
-                <div className="text-xs tracking-wider uppercase text-stone-muted font-semibold">{stat.label}</div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+
 
       {/* 3. CORE SERVICES */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
