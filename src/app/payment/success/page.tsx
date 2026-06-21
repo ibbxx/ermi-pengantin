@@ -51,7 +51,7 @@ function SuccessPageContent() {
 
   return (
     <div className="max-w-2xl mx-auto py-16 px-4 space-y-8">
-      
+
       {/* Visual Indicator */}
       <div className="text-center space-y-3">
         <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm border border-emerald-100">
