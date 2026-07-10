@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Dress, MakeupPackage, DecorPackage, WeddingPackage, Testimonial, Gallery, Booking, SystemSettings } from '@/types';
-import {
-  MOCK_DRESSES,
-  MOCK_MAKEUP,
-  MOCK_DECOR,
-  MOCK_PACKAGES,
-  MOCK_TESTIMONIALS,
-  MOCK_GALLERY,
-  INITIAL_BOOKINGS
-} from './mockData';
+
+const EMPTY_DRESSES: Dress[] = [];
+const EMPTY_MAKEUP: MakeupPackage[] = [];
+const EMPTY_DECOR: DecorPackage[] = [];
+const EMPTY_PACKAGES: WeddingPackage[] = [];
+const EMPTY_TESTIMONIALS: Testimonial[] = [];
+const EMPTY_GALLERY: Gallery[] = [];
+const EMPTY_BOOKINGS: Booking[] = [];
 
 // Helper to determine if we are in the browser environment
 const isBrowser = () => typeof window !== 'undefined';
@@ -23,97 +22,97 @@ const DEFAULT_SETTINGS: SystemSettings = {
   minDpPercent: 30,
   transportBase: 150000,
   address: 'Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730',
-  heroImage: '/asset/Baju Pengantin.jpeg'
+  heroImage: ''
 };
 
 // Centralized client-side repository
 export const db = {
   getDresses(): Dress[] {
-    if (!isBrowser()) return MOCK_DRESSES;
+    if (!isBrowser()) return EMPTY_DRESSES;
     const data = localStorage.getItem('elika_dresses');
     if (!data) {
-      localStorage.setItem('elika_dresses', JSON.stringify(MOCK_DRESSES));
-      return MOCK_DRESSES;
+      localStorage.setItem('elika_dresses', JSON.stringify(EMPTY_DRESSES));
+      return EMPTY_DRESSES;
     }
-    try { return JSON.parse(data); } catch { return MOCK_DRESSES; }
+    try { return JSON.parse(data); } catch { return EMPTY_DRESSES; }
   },
   saveDresses(dresses: Dress[]) {
     if (isBrowser()) localStorage.setItem('elika_dresses', JSON.stringify(dresses));
   },
 
   getMakeup(): MakeupPackage[] {
-    if (!isBrowser()) return MOCK_MAKEUP;
+    if (!isBrowser()) return EMPTY_MAKEUP;
     const data = localStorage.getItem('elika_makeup');
     if (!data) {
-      localStorage.setItem('elika_makeup', JSON.stringify(MOCK_MAKEUP));
-      return MOCK_MAKEUP;
+      localStorage.setItem('elika_makeup', JSON.stringify(EMPTY_MAKEUP));
+      return EMPTY_MAKEUP;
     }
-    try { return JSON.parse(data); } catch { return MOCK_MAKEUP; }
+    try { return JSON.parse(data); } catch { return EMPTY_MAKEUP; }
   },
   saveMakeup(packages: MakeupPackage[]) {
     if (isBrowser()) localStorage.setItem('elika_makeup', JSON.stringify(packages));
   },
 
   getDecor(): DecorPackage[] {
-    if (!isBrowser()) return MOCK_DECOR;
+    if (!isBrowser()) return EMPTY_DECOR;
     const data = localStorage.getItem('elika_decor');
     if (!data) {
-      localStorage.setItem('elika_decor', JSON.stringify(MOCK_DECOR));
-      return MOCK_DECOR;
+      localStorage.setItem('elika_decor', JSON.stringify(EMPTY_DECOR));
+      return EMPTY_DECOR;
     }
-    try { return JSON.parse(data); } catch { return MOCK_DECOR; }
+    try { return JSON.parse(data); } catch { return EMPTY_DECOR; }
   },
   saveDecor(decorations: DecorPackage[]) {
     if (isBrowser()) localStorage.setItem('elika_decor', JSON.stringify(decorations));
   },
 
   getPackages(): WeddingPackage[] {
-    if (!isBrowser()) return MOCK_PACKAGES;
+    if (!isBrowser()) return EMPTY_PACKAGES;
     const data = localStorage.getItem('elika_packages');
     if (!data) {
-      localStorage.setItem('elika_packages', JSON.stringify(MOCK_PACKAGES));
-      return MOCK_PACKAGES;
+      localStorage.setItem('elika_packages', JSON.stringify(EMPTY_PACKAGES));
+      return EMPTY_PACKAGES;
     }
-    try { return JSON.parse(data); } catch { return MOCK_PACKAGES; }
+    try { return JSON.parse(data); } catch { return EMPTY_PACKAGES; }
   },
   savePackages(packages: WeddingPackage[]) {
     if (isBrowser()) localStorage.setItem('elika_packages', JSON.stringify(packages));
   },
 
   getGallery(): Gallery[] {
-    if (!isBrowser()) return MOCK_GALLERY;
+    if (!isBrowser()) return EMPTY_GALLERY;
     const data = localStorage.getItem('elika_gallery');
     if (!data) {
-      localStorage.setItem('elika_gallery', JSON.stringify(MOCK_GALLERY));
-      return MOCK_GALLERY;
+      localStorage.setItem('elika_gallery', JSON.stringify(EMPTY_GALLERY));
+      return EMPTY_GALLERY;
     }
-    try { return JSON.parse(data); } catch { return MOCK_GALLERY; }
+    try { return JSON.parse(data); } catch { return EMPTY_GALLERY; }
   },
   saveGallery(gallery: Gallery[]) {
     if (isBrowser()) localStorage.setItem('elika_gallery', JSON.stringify(gallery));
   },
 
   getTestimonials(): Testimonial[] {
-    if (!isBrowser()) return MOCK_TESTIMONIALS;
+    if (!isBrowser()) return EMPTY_TESTIMONIALS;
     const data = localStorage.getItem('elika_testimonials');
     if (!data) {
-      localStorage.setItem('elika_testimonials', JSON.stringify(MOCK_TESTIMONIALS));
-      return MOCK_TESTIMONIALS;
+      localStorage.setItem('elika_testimonials', JSON.stringify(EMPTY_TESTIMONIALS));
+      return EMPTY_TESTIMONIALS;
     }
-    try { return JSON.parse(data); } catch { return MOCK_TESTIMONIALS; }
+    try { return JSON.parse(data); } catch { return EMPTY_TESTIMONIALS; }
   },
   saveTestimonials(testimonials: Testimonial[]) {
     if (isBrowser()) localStorage.setItem('elika_testimonials', JSON.stringify(testimonials));
   },
 
   getBookings(): Booking[] {
-    if (!isBrowser()) return INITIAL_BOOKINGS;
+    if (!isBrowser()) return EMPTY_BOOKINGS;
     const data = localStorage.getItem('elika_bookings');
     if (!data) {
-      localStorage.setItem('elika_bookings', JSON.stringify(INITIAL_BOOKINGS));
-      return INITIAL_BOOKINGS;
+      localStorage.setItem('elika_bookings', JSON.stringify(EMPTY_BOOKINGS));
+      return EMPTY_BOOKINGS;
     }
-    try { return JSON.parse(data); } catch { return INITIAL_BOOKINGS; }
+    try { return JSON.parse(data); } catch { return EMPTY_BOOKINGS; }
   },
   saveBookings(bookings: Booking[]) {
     if (isBrowser()) localStorage.setItem('elika_bookings', JSON.stringify(bookings));
@@ -135,7 +134,7 @@ export const db = {
 
 // React Custom Hooks for easy integration and hydration compatibility
 export function useDresses() {
-  const [dresses, setDresses] = useState<Dress[]>(MOCK_DRESSES);
+  const [dresses, setDresses] = useState<Dress[]>(EMPTY_DRESSES);
   useEffect(() => {
     setDresses(db.getDresses());
   }, []);
@@ -147,7 +146,7 @@ export function useDresses() {
 }
 
 export function useMakeup() {
-  const [packages, setPackages] = useState<MakeupPackage[]>(MOCK_MAKEUP);
+  const [packages, setPackages] = useState<MakeupPackage[]>(EMPTY_MAKEUP);
   useEffect(() => {
     setPackages(db.getMakeup());
   }, []);
@@ -159,7 +158,7 @@ export function useMakeup() {
 }
 
 export function useDecor() {
-  const [decorations, setDecorations] = useState<DecorPackage[]>(MOCK_DECOR);
+  const [decorations, setDecorations] = useState<DecorPackage[]>(EMPTY_DECOR);
   useEffect(() => {
     setDecorations(db.getDecor());
   }, []);
@@ -171,7 +170,7 @@ export function useDecor() {
 }
 
 export function usePackages() {
-  const [packages, setPackages] = useState<WeddingPackage[]>(MOCK_PACKAGES);
+  const [packages, setPackages] = useState<WeddingPackage[]>(EMPTY_PACKAGES);
   useEffect(() => {
     setPackages(db.getPackages());
   }, []);
@@ -183,7 +182,7 @@ export function usePackages() {
 }
 
 export function useGallery() {
-  const [gallery, setGallery] = useState<Gallery[]>(MOCK_GALLERY);
+  const [gallery, setGallery] = useState<Gallery[]>(EMPTY_GALLERY);
   useEffect(() => {
     setGallery(db.getGallery());
   }, []);
@@ -195,7 +194,7 @@ export function useGallery() {
 }
 
 export function useTestimonials() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(MOCK_TESTIMONIALS);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(EMPTY_TESTIMONIALS);
   useEffect(() => {
     setTestimonials(db.getTestimonials());
   }, []);
@@ -207,7 +206,7 @@ export function useTestimonials() {
 }
 
 export function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>(EMPTY_BOOKINGS);
   useEffect(() => {
     setBookings(db.getBookings());
   }, []);

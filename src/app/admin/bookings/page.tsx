@@ -1,30 +1,15 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Filter, MessageSquare, Trash2, Edit3, Check, FileText } from 'lucide-react';
 import { Booking, BookingStatus } from '@/types';
-import { INITIAL_BOOKINGS } from '@/data/mockData';
 import EmptyState from '@/components/ui/EmptyState';
+import { useBookings } from '@/data/db';
 
 export default function AdminBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useBookings();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-
-  // Load bookings
-  useEffect(() => {
-    const savedBookingsStr = localStorage.getItem('elika_bookings');
-    if (savedBookingsStr) {
-      try {
-        setBookings(JSON.parse(savedBookingsStr));
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      localStorage.setItem('elika_bookings', JSON.stringify(INITIAL_BOOKINGS));
-      setBookings(INITIAL_BOOKINGS);
-    }
-  }, []);
 
   const formatPrice = (price: number | string) => {
     if (typeof price === 'string') return price;
@@ -51,7 +36,6 @@ export default function AdminBookings() {
     });
 
     setBookings(updatedList);
-    localStorage.setItem('elika_bookings', JSON.stringify(updatedList));
   };
 
   // Delete booking
@@ -59,7 +43,6 @@ export default function AdminBookings() {
     if (confirm('Apakah Anda yakin ingin menghapus booking ini secara permanen dari sistem?')) {
       const updatedList = bookings.filter((b) => b.id !== id);
       setBookings(updatedList);
-      localStorage.setItem('elika_bookings', JSON.stringify(updatedList));
     }
   };
 

@@ -1,22 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Award, X } from 'lucide-react';
+import { Plus, Trash2, Award, X, Edit3 } from 'lucide-react';
 import { usePackages } from '@/data/db';
 import { WeddingPackage } from '@/types';
 
 export default function AdminPackages() {
   const [packages, setPackages] = usePackages();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingPackage, setEditingPackage] = useState<WeddingPackage | null>(null);
 
-  // New package form states
   const [name, setName] = useState('');
-  const [price, setPrice] = useState(25000000);
-  const [dressesIncluded, setDressesIncluded] = useState(3);
-  const [makeupIncludedInput, setMakeupIncludedInput] = useState('Makeup Akad Pengantin, Retouch Resepsi, Makeup 2 Ibu Kandung');
-  const [decorIncluded, setDecorIncluded] = useState('Dekorasi Pelaminan Ballroom/Gedung Standard (Lebar 6-8m, Bebas Pilih Tema)');
-  const [featuresInput, setFeaturesInput] = useState('3 Pasang Baju Pengantin, Makeup Akad + Resepsi, Dekorasi Pelaminan Premium 6-8m, Welcome Gate, Free Transport');
-  const [depositRequired, setDepositRequired] = useState(5000000);
+  const [price, setPrice] = useState(0);
+  const [dressesIncluded, setDressesIncluded] = useState(0);
+  const [makeupIncludedInput, setMakeupIncludedInput] = useState('');
+  const [decorIncluded, setDecorIncluded] = useState('');
+  const [featuresInput, setFeaturesInput] = useState('');
+  const [depositRequired, setDepositRequired] = useState(0);
   const [isPopular, setIsPopular] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -33,12 +33,42 @@ export default function AdminPackages() {
     }
   };
 
-  const handleAddPackage = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setEditingPackage(null);
+    setName('');
+    setPrice(0);
+    setDressesIncluded(0);
+    setMakeupIncludedInput('');
+    setDecorIncluded('');
+    setFeaturesInput('');
+    setDepositRequired(0);
+    setIsPopular(false);
+  };
+
+  const handleOpenAddModal = () => {
+    resetForm();
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditModal = (pkg: WeddingPackage) => {
+    setEditingPackage(pkg);
+    setName(pkg.name);
+    setPrice(pkg.price);
+    setDressesIncluded(pkg.dressesIncluded);
+    setMakeupIncludedInput(pkg.makeupIncluded.join(', '));
+    setDecorIncluded(pkg.decorIncluded);
+    setFeaturesInput(pkg.features.join(', '));
+    setDepositRequired(pkg.depositRequired);
+    setIsPopular(pkg.isPopular);
+    setShowAddModal(true);
+  };
+
+  const handleSubmitPackage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const newPackage: WeddingPackage = {
-      id: `pkg-${Date.now()}`,
+    const packagePayload: WeddingPackage = {
+      id: editingPackage?.id || `pkg-${Date.now()}`,
       name,
       price,
       dressesIncluded,
@@ -49,17 +79,13 @@ export default function AdminPackages() {
       isPopular
     };
 
-    setPackages([...packages, newPackage]);
+    if (editingPackage) {
+      setPackages(packages.map((pkg) => (pkg.id === editingPackage.id ? packagePayload : pkg)));
+    } else {
+      setPackages([...packages, packagePayload]);
+    }
 
-    // Reset fields
-    setName('');
-    setPrice(25000000);
-    setDressesIncluded(3);
-    setMakeupIncludedInput('Makeup Akad Pengantin, Retouch Resepsi, Makeup 2 Ibu Kandung');
-    setDecorIncluded('Dekorasi Pelaminan Ballroom/Gedung Standard (Lebar 6-8m, Bebas Pilih Tema)');
-    setFeaturesInput('3 Pasang Baju Pengantin, Makeup Akad + Resepsi, Dekorasi Pelaminan Premium 6-8m, Welcome Gate, Free Transport');
-    setDepositRequired(5000000);
-    setIsPopular(false);
+    resetForm();
     setShowAddModal(false);
   };
 
@@ -73,7 +99,7 @@ export default function AdminPackages() {
           <p className="text-[10px] text-stone-400">Atur paket komplit gabungan baju, makeup, dan dekorasi pelaminan dengan harga khusus.</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={handleOpenAddModal}
           className="px-4 py-2 bg-gold hover:bg-gold-dark text-white rounded-xl font-semibold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="h-4 w-4" /> Tambah Paket
@@ -107,6 +133,13 @@ export default function AdminPackages() {
                 <td className="p-4 md:p-5 text-stone-600">{formatPrice(item.depositRequired)}</td>
                 <td className="p-4 md:p-5 text-right">
                   <button
+                    onClick={() => handleOpenEditModal(item)}
+                    className="p-1.5 rounded border border-stone-200 hover:border-gold hover:bg-gold/5 text-stone-500 hover:text-gold-dark transition-all inline-block cursor-pointer mr-2"
+                    title="Edit Paket"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => handleDelete(item.id)}
                     className="p-1.5 rounded border border-stone-200 hover:border-red-500 hover:bg-red-50 text-stone-500 hover:text-red-700 transition-all inline-block cursor-pointer"
                     title="Hapus Paket"
@@ -125,17 +158,20 @@ export default function AdminPackages() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full border border-gold-light/20 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
             <button
-              onClick={() => setShowAddModal(false)}
+              onClick={() => {
+                resetForm();
+                setShowAddModal(false);
+              }}
               className="absolute top-4 right-4 text-stone-400 hover:text-charcoal transition-colors cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
 
             <h3 className="font-serif font-bold text-lg text-charcoal pb-2 border-b border-gold-light/10">
-              Tambah Paket Pernikahan
+              {editingPackage ? 'Edit Paket Pernikahan' : 'Tambah Paket Pernikahan'}
             </h3>
 
-            <form onSubmit={handleAddPackage} className="space-y-4 text-xs">
+            <form onSubmit={handleSubmitPackage} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1">
                   <label className="font-semibold text-charcoal">Nama Paket Pernikahan</label>
@@ -235,7 +271,7 @@ export default function AdminPackages() {
                   type="submit"
                   className="w-full py-3 bg-gold hover:bg-gold-dark text-white font-bold rounded-xl uppercase tracking-wider shadow-md cursor-pointer"
                 >
-                  Simpan Paket Pernikahan
+                  {editingPackage ? 'Simpan Perubahan Paket' : 'Simpan Paket Pernikahan'}
                 </button>
               </div>
             </form>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, Calendar, MapPin, User, Phone, Mail, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { MOCK_DRESSES, MOCK_MAKEUP, MOCK_DECOR, MOCK_PACKAGES } from '@/data/mockData';
 import { useDresses, useMakeup, useDecor, usePackages, useSettings } from '@/data/db';
 import { Booking } from '@/types';
 
@@ -132,7 +131,7 @@ function BookingFormContent() {
             size: selectedSize,
             color: selectedColor,
             price: dress.price,
-            image: dress.images[0]
+            image: dress.images[0] || ''
           });
         }
       }
@@ -185,7 +184,13 @@ function BookingFormContent() {
     selectedColor,
     selectedMakeupId,
     selectedDecorId,
-    selectedPackageId
+    selectedPackageId,
+    packages,
+    dresses,
+    makeup,
+    decorations,
+    settings.minDpPercent,
+    settings.transportBase,
   ]);
 
   const formatPrice = (price: number) => {

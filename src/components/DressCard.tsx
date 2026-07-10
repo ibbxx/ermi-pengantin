@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Star, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Dress } from '@/types';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 interface DressCardProps {
   dress: Dress;
@@ -21,12 +22,16 @@ export default function DressCard({ dress }: DressCardProps) {
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gold-light/20 flex flex-col group h-full">
       {/* Dress Image */}
       <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
-        <img
-          src={dress.images[0]}
-          alt={dress.name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
+        {dress.images[0] ? (
+          <img
+            src={dress.images[0]}
+            alt={dress.name}
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+        ) : (
+          <ImagePlaceholder label="Foto gaun kosong" />
+        )}
         {/* Popular Badge */}
         {dress.isPopular && (
           <div className="absolute top-3 left-3 bg-gold text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">

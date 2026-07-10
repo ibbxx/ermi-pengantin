@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Check, Map } from 'lucide-react';
 import { DecorPackage } from '@/types';
 import { useSettings } from '@/data/db';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 interface DecorPackageCardProps {
   pkg: DecorPackage;
@@ -29,11 +30,15 @@ export default function DecorPackageCard({ pkg }: DecorPackageCardProps) {
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gold-light/20 flex flex-col h-full">
       {/* Background Image / Banner */}
       <div className="relative h-56 bg-stone-100 overflow-hidden">
-        <img
-          src={pkg.images[0]}
-          alt={pkg.name}
-          className="w-full h-full object-cover"
-        />
+        {pkg.images[0] ? (
+          <img
+            src={pkg.images[0]}
+            alt={pkg.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <ImagePlaceholder label="Foto dekor kosong" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/20 to-transparent" />
         <div className="absolute top-4 right-4 bg-gold text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full">
           Tema: {pkg.theme}

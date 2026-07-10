@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Sparkles, Heart, ShieldAlert, Award } from 'lucide-react';
 import { useMakeup, useGallery, useSettings } from '@/data/db';
 import MakeupPackageCard from '@/components/MakeupPackageCard';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 export default function MakeupPage() {
   const [makeup] = useMakeup();
@@ -77,11 +78,15 @@ export default function MakeupPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {makeupPortfolios.map((item) => (
             <div key={item.id} className="relative aspect-square overflow-hidden rounded-2xl group shadow-sm">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover"
-              />
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <ImagePlaceholder label="Foto kosong" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/20 to-transparent flex flex-col justify-end p-5" />
               <div className="absolute bottom-4 left-4 right-4 text-white z-10">
                 <h4 className="font-serif font-bold text-base">{item.title}</h4>

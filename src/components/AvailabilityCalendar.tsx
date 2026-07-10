@@ -10,17 +10,15 @@ interface AvailabilityCalendarProps {
 }
 
 export default function AvailabilityCalendar({ bookedDates, selectedDate, onChange }: AvailabilityCalendarProps) {
-  // Current view: June 2026
-  const [year, setYear] = useState(2026);
-  const [month, setMonth] = useState(5); // 0-indexed, so 5 = June
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
 
   const months = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
-  // June 2026 starts on Monday (1) and has 30 days
-  // Let's generate dates dynamically for simplicity, or hardcode calendar grid logic
   const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
   const getFirstDayOfMonth = (y: number, m: number) => new Date(y, m, 1).getDay(); // 0 = Sunday
 

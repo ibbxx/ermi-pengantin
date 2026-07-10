@@ -3,56 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Settings, Info, Upload, X, Loader2 } from 'lucide-react';
 import { useSettings } from '@/data/db';
-
-const compressImage = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        const MAX_DIM = 1200;
-        if (width > MAX_DIM || height > MAX_DIM) {
-          if (width > height) {
-            height = Math.round((height * MAX_DIM) / width);
-            width = MAX_DIM;
-          } else {
-            width = Math.round((width * MAX_DIM) / height);
-            height = MAX_DIM;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(event.target?.result as string);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        let quality = 0.82;
-        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-        
-        while (dataUrl.length > 680000 && quality > 0.3) {
-          quality -= 0.08;
-          dataUrl = canvas.toDataURL('image/jpeg', quality);
-        }
-
-        resolve(dataUrl);
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+import { uploadImage } from '@/lib/storage';
 
 export default function AdminSettings() {
   const [settings, setSettings] = useSettings();
@@ -211,11 +162,11 @@ export default function AdminSettings() {
                       if (!file) return;
                       setUploadingImage(true);
                       try {
-                        const compressed = await compressImage(file);
-                        setHeroImage(compressed);
+                        const url = await uploadImage(file, 'settings');
+                        setHeroImage(url);
                       } catch (error) {
-                        console.error('Failed to compress image:', error);
-                        alert('Gagal memuat gambar.');
+                        console.error('Failed to upload image:', error);
+                        alert('Gagal mengunggah gambar.');
                       } finally {
                         setUploadingImage(false);
                       }

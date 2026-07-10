@@ -16,6 +16,7 @@ import {
 import { useDresses, usePackages, useGallery, useTestimonials, useSettings } from '@/data/db';
 import DressCard from '@/components/DressCard';
 import PackageCard from '@/components/PackageCard';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 export default function Home() {
   const [dresses] = useDresses();
@@ -34,19 +35,19 @@ export default function Home() {
       title: 'Sewa Gaun Pengantin',
       description: 'Gaun mewah bernuansa modern, kebaya prada adat, baju adat tradisional, hingga jas formal dengan jaminan fitting sempurna.',
       href: '/dresses',
-      img: 'https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=600&q=80',
+      img: dresses.find((dress) => dress.images[0])?.images[0] || '',
     },
     {
       title: 'Jasa Makeup Pengantin',
       description: 'Riasan wajah flawless dan berkilau yang disesuaikan dengan gaun Anda, dijamin tahan lama sepanjang hari oleh MUA profesional kami.',
       href: '/makeup',
-      img: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=80',
+      img: gallery.find((item) => item.category === 'makeup' && item.image)?.image || '',
     },
     {
       title: 'Dekorasi Pelaminan',
       description: 'Dekorasi ballroom megah, konsep rustic outdoor romantis, hingga pelaminan adat sakral yang didesain presisi sesuai venue Anda.',
       href: '/decor',
-      img: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80',
+      img: gallery.find((item) => item.category === 'decor' && item.image)?.image || '',
     },
   ];
 
@@ -102,11 +103,15 @@ export default function Home() {
       {/* 1. HERO SECTION */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-20">
         <div className="absolute inset-0 z-0">
-          <img
-            src={settings.heroImage || '/asset/Baju Pengantin.jpeg'}
-            alt="Pernikahan Indonesia"
-            className="w-full h-full object-cover brightness-[0.65]"
-          />
+          {settings.heroImage ? (
+            <img
+              src={settings.heroImage}
+              alt="Pernikahan Indonesia"
+              className="w-full h-full object-cover brightness-[0.65]"
+            />
+          ) : (
+            <ImagePlaceholder label="Hero belum diatur" className="brightness-[0.65]" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-charcoal/80 via-charcoal/50 to-transparent" />
         </div>
         
@@ -159,11 +164,15 @@ export default function Home() {
           {services.map((svc, i) => (
             <div key={i} className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gold-light/20 flex flex-col group">
               <div className="relative h-64 overflow-hidden">
-                <img
-                  src={svc.img}
-                  alt={svc.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+                {svc.img ? (
+                  <img
+                    src={svc.img}
+                    alt={svc.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <ImagePlaceholder label="Belum ada foto" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 to-transparent" />
               </div>
               <div className="p-6 space-y-4 flex flex-col flex-grow">
@@ -237,11 +246,15 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {gallery.slice(0, 6).map((item) => (
               <div key={item.id} className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer shadow-lg">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <ImagePlaceholder label="Foto kosong" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6" />
                 <div className="absolute inset-x-6 bottom-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100 text-white z-10">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-gold block mb-1">
@@ -306,11 +319,17 @@ export default function Home() {
                   "{test.comment}"
                 </p>
                 <div className="flex items-center space-x-3 pt-4 border-t border-gold-light/10">
-                  <img
-                    src={test.avatar}
-                    alt={test.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  {test.avatar ? (
+                    <img
+                      src={test.avatar}
+                      alt={test.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-[10px] font-bold text-stone-400">
+                      {test.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <div>
                     <h4 className="font-bold text-xs text-charcoal">{test.name}</h4>
                     <p className="text-[10px] text-stone-muted">{test.role}</p>

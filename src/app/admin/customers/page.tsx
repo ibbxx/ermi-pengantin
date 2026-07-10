@@ -1,26 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Mail, Phone, MapPin, Clipboard } from 'lucide-react';
 import { Booking } from '@/types';
-import { INITIAL_BOOKINGS } from '@/data/mockData';
+import { useBookings } from '@/data/db';
 
 export default function AdminCustomers() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings] = useBookings();
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const savedBookingsStr = localStorage.getItem('elika_bookings');
-    if (savedBookingsStr) {
-      try {
-        setBookings(JSON.parse(savedBookingsStr));
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      setBookings(INITIAL_BOOKINGS);
-    }
-  }, []);
 
   // Compute unique customers from bookings
   const customers = useMemo(() => {

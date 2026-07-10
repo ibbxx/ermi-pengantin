@@ -4,61 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, Trash2, Edit3, Scissors, Check, X, Upload, Loader2 } from 'lucide-react';
 import { useDresses } from '@/data/db';
 import { Dress, DressCategory } from '@/types';
-
-const compressImage = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        // Max dimension 1200px (very sharp for standard web, but small file size)
-        const MAX_DIM = 1200;
-        if (width > MAX_DIM || height > MAX_DIM) {
-          if (width > height) {
-            height = Math.round((height * MAX_DIM) / width);
-            width = MAX_DIM;
-          } else {
-            width = Math.round((width * MAX_DIM) / height);
-            height = MAX_DIM;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(event.target?.result as string);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Compress to JPEG with quality.
-        // Try quality 0.82 (very sharp)
-        let quality = 0.82;
-        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-        
-        // Check size: base64 size is approx 1.33 * actual byte size.
-        // 500 KB in base64 string length is roughly 512,000 * 1.37 = 701,440 characters.
-        while (dataUrl.length > 680000 && quality > 0.3) {
-          quality -= 0.08;
-          dataUrl = canvas.toDataURL('image/jpeg', quality);
-        }
-
-        resolve(dataUrl);
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+import { uploadImage, deleteImage } from '@/lib/storage';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 export default function AdminDresses() {
   const [dresses, setDresses] = useDresses();
@@ -115,7 +62,7 @@ export default function AdminDresses() {
     setColorInput('Ivory, White');
     setMaterial('Sutera, Tulle');
     setDescription('');
-    setImagesList(['https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=800&q=80']);
+    setImagesList([]);
     setStatus('available');
     setIsPopular(false);
     setShowAddModal(true);
@@ -162,7 +109,7 @@ export default function AdminDresses() {
         deposit,
         sizes: sizesArray,
         colors: colorsArray,
-        images: imagesList.length > 0 ? imagesList : ['https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=800&q=80'],
+        images: imagesList,
         description,
         material,
         status,
@@ -181,7 +128,7 @@ export default function AdminDresses() {
         deposit,
         sizes: sizesArray,
         colors: colorsArray,
-        images: imagesList.length > 0 ? imagesList : ['https://images.unsplash.com/photo-1594552072238-b8a33785b261?auto=format&fit=crop&w=800&q=80'],
+        images: imagesList,
         description,
         material,
         rentalDurationDays: 3,
@@ -208,13 +155,13 @@ export default function AdminDresses() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (!file.type.startsWith('image/')) continue;
-        const compressed = await compressImage(file);
-        newImages.push(compressed);
+        const url = await uploadImage(file, 'dresses');
+        newImages.push(url);
       }
       setImagesList((prev) => [...prev, ...newImages]);
     } catch (error) {
-      console.error('Gagal mengompresi gambar:', error);
-      alert('Gagal memuat gambar. Silakan coba berkas lain.');
+      console.error('Gagal mengunggah gambar:', error);
+      alert('Gagal mengunggah gambar. Silakan coba lagi.');
     } finally {
       setUploadingImage(false);
     }
@@ -233,7 +180,10 @@ export default function AdminDresses() {
     handleImageUpload(e.target.files);
   };
 
-  const removeImage = (indexToRemove: number) => {
+  const removeImage = async (indexToRemove: number) => {
+    const imageUrl = imagesList[indexToRemove];
+    // Delete from Supabase Storage (no-op for external URLs)
+    await deleteImage(imageUrl);
     setImagesList((prev) => prev.filter((_, i) => i !== indexToRemove));
   };
 
@@ -346,7 +296,13 @@ export default function AdminDresses() {
               {filteredDresses.map((item) => (
                 <tr key={item.id} className="hover:bg-ivory-light/35 transition-colors">
                   <td className="p-4 md:p-5 flex items-center space-x-3">
-                    <img src={item.images[0]} alt={item.name} className="w-12 h-16 rounded object-cover" />
+                    <div className="h-16 w-12 overflow-hidden rounded bg-stone-100">
+                      {item.images[0] ? (
+                        <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <ImagePlaceholder label="" />
+                      )}
+                    </div>
                     <div>
                       <p className="font-bold text-charcoal leading-tight">{item.name}</p>
                       <span className="text-[9px] text-stone-400">{item.material}</span>
@@ -507,7 +463,7 @@ export default function AdminDresses() {
                   <label className="font-semibold text-charcoal">Status</label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
+                    onChange={(e) => setStatus(e.target.value as Dress['status'])}
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
                   >
                     <option value="available">Ready</option>
