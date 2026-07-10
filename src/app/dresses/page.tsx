@@ -21,35 +21,8 @@ export default function DressesCatalog() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSize, setSelectedSize] = useState<string>('all');
   const [selectedColor, setSelectedColor] = useState<string>('all');
-  const [maxPrice, setMaxPrice] = useState<number>(4000000);
   const [checkDate, setCheckDate] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('popular');
-
-  // Dynamic price limits based on available dresses
-  const priceLimits = useMemo(() => {
-    if (!isMounted || !dresses || dresses.length === 0) {
-      return { min: 500000, max: 4000000 };
-    }
-    const prices = dresses.map((d) => d.price);
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    return {
-      min: Math.floor(min / 100000) * 100000 || 500000,
-      max: Math.ceil(max / 100000) * 100000 || 4000000,
-    };
-  }, [dresses, isMounted]);
-
-  // Sync maxPrice when price limits change
-  useEffect(() => {
-    if (isMounted) {
-      setMaxPrice((prev) => {
-        if (prev === 4000000 || prev > priceLimits.max || prev < priceLimits.min) {
-          return priceLimits.max;
-        }
-        return prev;
-      });
-    }
-  }, [isMounted, priceLimits]);
 
   // Dynamic categories based on active dresses in inventory
   const categories = useMemo(() => {
@@ -133,15 +106,12 @@ export default function DressesCatalog() {
         selectedColor === 'all' ||
         dress.colors.some((color) => color.toLowerCase().includes(selectedColor.toLowerCase()));
 
-      // 5. Price Filter
-      const matchPrice = dress.price <= maxPrice;
-
-      // 6. Date Availability Check
+      // 5. Date Availability Check
       // If a date is selected, check if it's available (i.e. present in dress.availableDates)
       const matchDate =
         !checkDate || dress.availableDates.includes(checkDate);
 
-      return matchSearch && matchCategory && matchSize && matchColor && matchPrice && matchDate;
+      return matchSearch && matchCategory && matchSize && matchColor && matchDate;
     }).sort((a, b) => {
       // Sorting
       if (sortBy === 'price-asc') return a.price - b.price;
@@ -150,24 +120,15 @@ export default function DressesCatalog() {
       // Default: popular / rating count
       return b.reviewCount - a.reviewCount;
     });
-  }, [searchQuery, selectedCategory, selectedSize, selectedColor, maxPrice, checkDate, sortBy]);
+  }, [searchQuery, selectedCategory, selectedSize, selectedColor, checkDate, sortBy]);
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
     setSelectedSize('all');
     setSelectedColor('all');
-    setMaxPrice(priceLimits.max);
     setCheckDate('');
     setSortBy('popular');
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price);
   };
 
   return (
@@ -276,26 +237,7 @@ export default function DressesCatalog() {
             </select>
           </div>
 
-          {/* Max Price Filter */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs font-semibold text-charcoal">
-              <span>Batas Harga Sewa</span>
-              <span className="text-gold-dark">{formatPrice(maxPrice)}</span>
-            </div>
-            <input
-              type="range"
-              min={priceLimits.min}
-              max={priceLimits.max}
-              step="100000"
-              value={Math.min(maxPrice, priceLimits.max)}
-              onChange={(e) => setMaxPrice(Number(e.target.value))}
-              className="w-full accent-gold cursor-pointer"
-            />
-            <div className="flex justify-between text-[10px] text-stone-400">
-              <span>{formatPrice(priceLimits.min)}</span>
-              <span>{formatPrice(priceLimits.max)}</span>
-            </div>
-          </div>
+
 
         </div>
 
