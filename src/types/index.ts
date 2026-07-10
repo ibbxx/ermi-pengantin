@@ -163,15 +163,6 @@ export interface SystemSettings {
   minDpPercent: number;
   transportBase: number;
   address: string;
-}
-
-
-export interface SystemSettings {
-  shopName: string;
-  whatsappAdmin: string;
-  emailAdmin: string;
-  minDpPercent: number;
-  transportBase: number;
-  address: string;
+  heroImage: string;
 }
 

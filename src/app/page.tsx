@@ -103,7 +103,7 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-20">
         <div className="absolute inset-0 z-0">
           <img
-            src="/asset/Baju%20Pengantin.jpeg"
+            src={settings.heroImage || '/asset/Baju Pengantin.jpeg'}
             alt="Pernikahan Indonesia"
             className="w-full h-full object-cover brightness-[0.65]"
           />

@@ -26,37 +26,26 @@ export default function DressesCatalog() {
 
   // Dynamic categories based on active dresses in inventory
   const categories = useMemo(() => {
-    const activeCats = isMounted ? dresses.map(d => d.category).filter(Boolean) : [];
+    const activeCats = dresses.map((d) => d.category).filter(Boolean);
     const uniqueCats = Array.from(new Set(activeCats));
 
-    const labelMapping: Record<string, string> = {
-      'Gaun Pengantin Modern': 'Gaun Modern',
-      'Kebaya Pengantin': 'Kebaya Pengantin',
-      'Baju Adat': 'Baju Adat',
-      'Jas Pengantin Pria': 'Jas Pria',
-      'Bridesmaid': 'Bridesmaid',
-      'Family Dress': 'Family Dress'
-    };
-
-    const items = uniqueCats.map(cat => ({
-      label: labelMapping[cat] || cat,
-      value: cat
+    const items = uniqueCats.map((cat) => ({
+      label: cat,
+      value: cat,
     }));
 
     return [
       { label: 'Semua Koleksi', value: 'all' },
-      ...items
+      ...items,
     ];
-  }, [dresses, isMounted]);
+  }, [dresses]);
 
   // Dynamic sizes based on available dresses
   const sizes = useMemo(() => {
-    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
-    const activeSizes = isMounted ? dresses.flatMap(d => d.sizes || []) : [];
-    const unique = Array.from(new Set([
-      ...defaultSizes,
-      ...activeSizes.map(s => s.trim().toUpperCase())
-    ].filter(Boolean)));
+    const activeSizes = dresses.flatMap((d) => d.sizes || []);
+    const unique = Array.from(
+      new Set(activeSizes.map((s) => s.trim().toUpperCase()))
+    ).filter(Boolean);
 
     const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     return unique.sort((a, b) => {
@@ -67,60 +56,64 @@ export default function DressesCatalog() {
       if (idxB !== -1) return 1;
       return a.localeCompare(b);
     });
-  }, [dresses, isMounted]);
+  }, [dresses]);
 
   // Dynamic colors based on available dresses
   const colors = useMemo(() => {
-    const defaultColors = ['Ivory', 'White', 'Champagne', 'Gold', 'Nude', 'Red', 'Green', 'Gray', 'Black'];
-    const activeColors = isMounted ? dresses.flatMap(d => d.colors || []) : [];
-    const unique = Array.from(new Set([
-      ...defaultColors,
-      ...activeColors.map(c => {
-        const trimmed = c.trim();
-        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-      })
-    ].filter(Boolean)));
-    
+    const activeColors = dresses.flatMap((d) => d.colors || []);
+    const unique = Array.from(
+      new Set(
+        activeColors.map((c) => {
+          const trimmed = c.trim();
+          return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+        })
+      )
+    ).filter(Boolean);
+
     return unique.sort((a, b) => a.localeCompare(b));
-  }, [dresses, isMounted]);
+  }, [dresses]);
 
   // Apply filters
   const filteredDresses = useMemo(() => {
-    return dresses.filter((dress) => {
-      // 1. Search Query
-      const matchSearch =
-        dress.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dress.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dress.material.toLowerCase().includes(searchQuery.toLowerCase());
+    return dresses
+      .filter((dress) => {
+        // 1. Search Query
+        const matchSearch =
+          dress.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          dress.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          dress.material.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // 2. Category Filter
-      const matchCategory =
-        selectedCategory === 'all' || dress.category === selectedCategory;
+        // 2. Category Filter
+        const matchCategory =
+          selectedCategory === 'all' || dress.category === selectedCategory;
 
-      // 3. Size Filter
-      const matchSize =
-        selectedSize === 'all' || dress.sizes.includes(selectedSize);
+        // 3. Size Filter
+        const matchSize =
+          selectedSize === 'all' || dress.sizes.includes(selectedSize);
 
-      // 4. Color Filter
-      const matchColor =
-        selectedColor === 'all' ||
-        dress.colors.some((color) => color.toLowerCase().includes(selectedColor.toLowerCase()));
+        // 4. Color Filter
+        const matchColor =
+          selectedColor === 'all' ||
+          dress.colors.some((color) =>
+            color.toLowerCase().includes(selectedColor.toLowerCase())
+          );
 
-      // 5. Date Availability Check
-      // If a date is selected, check if it's available (i.e. present in dress.availableDates)
-      const matchDate =
-        !checkDate || dress.availableDates.includes(checkDate);
+        // 5. Date Availability Check
+        // If a date is selected, check if it's available (i.e. present in dress.availableDates)
+        const matchDate =
+          !checkDate || dress.availableDates.includes(checkDate);
 
-      return matchSearch && matchCategory && matchSize && matchColor && matchDate;
-    }).sort((a, b) => {
-      // Sorting
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'rating') return b.rating - a.rating;
-      // Default: popular / rating count
-      return b.reviewCount - a.reviewCount;
-    });
-  }, [searchQuery, selectedCategory, selectedSize, selectedColor, checkDate, sortBy]);
+        return matchSearch && matchCategory && matchSize && matchColor && matchDate;
+      })
+      .sort((a, b) => {
+        // Sorting
+        if (sortBy === 'price-asc') return a.price - b.price;
+        if (sortBy === 'price-desc') return b.price - a.price;
+        if (sortBy === 'rating') return b.rating - a.rating;
+        // Default: popular / rating count
+        return b.reviewCount - a.reviewCount;
+      });
+  }, [dresses, searchQuery, selectedCategory, selectedSize, selectedColor, checkDate, sortBy]);
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -130,6 +123,56 @@ export default function DressesCatalog() {
     setCheckDate('');
     setSortBy('popular');
   };
+
+  // Render Skeleton during SSR and initial client hydration to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        {/* Header Skeleton */}
+        <div className="text-center max-w-xl mx-auto space-y-2">
+          <div className="h-10 bg-stone-150 animate-pulse rounded-md w-3/4 mx-auto" />
+          <div className="h-4 bg-stone-150 animate-pulse rounded-md w-5/6 mx-auto" />
+        </div>
+
+        {/* Main Catalog Layout Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar Skeleton */}
+          <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-gold-light/20 shadow-sm space-y-6 h-fit animate-pulse">
+            <div className="h-6 bg-stone-150 rounded w-1/2" />
+            <div className="space-y-2">
+              <div className="h-4 bg-stone-150 rounded w-1/3" />
+              <div className="h-8 bg-stone-150 rounded w-full" />
+            </div>
+            <div className="space-y-3">
+              <div className="h-4 bg-stone-150 rounded w-1/3" />
+              <div className="flex gap-2 flex-wrap">
+                <div className="h-7 bg-stone-150 rounded w-16" />
+                <div className="h-7 bg-stone-150 rounded w-20" />
+                <div className="h-7 bg-stone-150 rounded w-24" />
+              </div>
+            </div>
+          </div>
+
+          {/* Results Skeleton */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="h-12 bg-white rounded-xl border border-gold-light/10 shadow-sm animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="bg-white rounded-3xl overflow-hidden border border-gold-light/10 shadow-sm p-5 space-y-4 animate-pulse">
+                  <div className="aspect-[3/4] bg-stone-150 rounded-2xl w-full" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-stone-150 rounded-md w-3/4" />
+                    <div className="h-3 bg-stone-150 rounded-md w-1/2" />
+                    <div className="h-5 bg-stone-150 rounded-md w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -237,8 +280,6 @@ export default function DressesCatalog() {
             </select>
           </div>
 
-
-
         </div>
 
         {/* RESULTS GRID */}
@@ -246,13 +287,7 @@ export default function DressesCatalog() {
           {/* Top Bar (Results count & Sorting) */}
           <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gold-light/10 shadow-sm gap-4">
             <span className="text-xs text-stone-500 font-medium">
-              {!isMounted ? (
-                <span className="inline-block w-36 h-4 bg-stone-150 animate-pulse rounded-md align-middle" />
-              ) : (
-                <>
-                  Menampilkan <span className="font-bold text-charcoal">{filteredDresses.length}</span> gaun pengantin
-                </>
-              )}
+              Menampilkan <span className="font-bold text-charcoal">{filteredDresses.length}</span> gaun pengantin
             </span>
             
             {/* Sorting Dropdown */}
@@ -272,20 +307,7 @@ export default function DressesCatalog() {
           </div>
 
           {/* Catalog Cards Grid */}
-          {!isMounted ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="bg-white rounded-3xl overflow-hidden border border-gold-light/10 shadow-sm animate-pulse space-y-4 p-5">
-                  <div className="aspect-[3/4] bg-stone-150 rounded-2xl w-full" />
-                  <div className="space-y-2">
-                    <div className="h-4.5 bg-stone-150 rounded-md w-3/4" />
-                    <div className="h-3.5 bg-stone-150 rounded-md w-1/2" />
-                    <div className="h-5 bg-stone-150 rounded-md w-1/3 pt-1" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filteredDresses.length > 0 ? (
+          {filteredDresses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDresses.map((dress) => (
                 <DressCard key={dress.id} dress={dress} />

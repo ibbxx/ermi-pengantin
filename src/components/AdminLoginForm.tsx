@@ -1,34 +1,53 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface AdminLoginFormProps {
   onLoginSuccess: () => void;
 }
 
 export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Simulate simple network delay
-    setTimeout(() => {
-      if (username.trim().toLowerCase() === 'admin' && password === 'admin123') {
+    const trimmedEmail = email.trim();
+
+    // Fallback local admin login
+    if (trimmedEmail.toLowerCase() === 'admin' && password === 'admin123') {
+      localStorage.setItem('elika_admin_logged_in', 'true');
+      onLoginSuccess();
+      return;
+    }
+
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: password,
+      });
+
+      if (authError) {
+        setError(authError.message === 'Invalid login credentials' 
+          ? 'Email atau password yang Anda masukkan salah.' 
+          : authError.message);
+        setIsLoading(false);
+      } else {
         localStorage.setItem('elika_admin_logged_in', 'true');
         onLoginSuccess();
-      } else {
-        setError('Username atau password yang Anda masukkan salah.');
-        setIsLoading(false);
       }
-    }, 500);
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan saat masuk.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,20 +75,20 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username */}
+          {/* Email / Username */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-charcoal block">Username</label>
+            <label className="text-xs font-semibold text-charcoal block">Email / Username</label>
             <div className="relative">
               <input
                 type="text"
                 required
                 disabled={isLoading}
-                placeholder="Masukkan username..."
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Masukkan email atau username..."
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-stone-50 border border-stone-200 text-charcoal rounded-xl py-2 px-3 pl-9 text-xs focus:outline-none focus:border-gold focus:bg-white transition-all placeholder-stone-400"
               />
-              <User className="h-4 w-4 text-stone-400 absolute left-3 top-2.5" />
+              <Mail className="h-4 w-4 text-stone-400 absolute left-3 top-2.5" />
             </div>
           </div>
 

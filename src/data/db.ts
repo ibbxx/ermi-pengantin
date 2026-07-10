@@ -22,7 +22,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
   emailAdmin: 'info@elikawedding.com',
   minDpPercent: 30,
   transportBase: 150000,
-  address: 'Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730'
+  address: 'Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730',
+  heroImage: '/asset/Baju Pengantin.jpeg'
 };
 
 // Centralized client-side repository
