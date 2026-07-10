@@ -1,30 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { DollarSign, ClipboardList, Users, Sparkles, AlertCircle, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { Booking } from '@/types';
-import { INITIAL_BOOKINGS } from '@/data/mockData';
+import { useBookings } from '@/data/db';
 
 export default function AdminDashboardOverview() {
-  const router = useRouter();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-
-  // Load bookings from localstorage on mount
-  useEffect(() => {
-    const savedBookingsStr = localStorage.getItem('elika_bookings');
-    if (savedBookingsStr) {
-      try {
-        setBookings(JSON.parse(savedBookingsStr));
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      localStorage.setItem('elika_bookings', JSON.stringify(INITIAL_BOOKINGS));
-      setBookings(INITIAL_BOOKINGS);
-    }
-  }, []);
+  const [bookings] = useBookings();
 
   // Compute stats based on localStorage bookings list
   const stats = useMemo(() => {

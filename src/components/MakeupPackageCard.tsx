@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { MakeupPackage } from '@/types';
 import { useSettings } from '@/data/db';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 interface MakeupPackageCardProps {
   pkg: MakeupPackage;
@@ -29,11 +30,15 @@ export default function MakeupPackageCard({ pkg }: MakeupPackageCardProps) {
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gold-light/20 flex flex-col h-full">
       {/* Visual Header / Image */}
       <div className="relative h-48 bg-stone-100 overflow-hidden">
-        <img
-          src={pkg.images[0]}
-          alt={pkg.name}
-          className="w-full h-full object-cover"
-        />
+        {pkg.images[0] ? (
+          <img
+            src={pkg.images[0]}
+            alt={pkg.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <ImagePlaceholder label="Foto MUA kosong" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
           <h3 className="text-white font-serif font-bold text-xl leading-tight">

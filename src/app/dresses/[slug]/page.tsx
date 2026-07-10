@@ -8,6 +8,7 @@ import { useDresses, useSettings } from '@/data/db';
 import DressCard from '@/components/DressCard';
 import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import EmptyState from '@/components/ui/EmptyState';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -72,16 +73,6 @@ export default function DressDetail({ params }: PageProps) {
     );
   };
 
-  // Dates not available (booked dates)
-  // Let's assume some dates are booked (we invert the availableDates array from mock data)
-  // Let's say: Jun 22, Jun 23, Jun 24, Jun 28, Jun 29 are booked.
-  // We can treat any date not in dress.availableDates as booked/unavailable!
-  // To make the calendar show available dates, we pass dates that are "unavailable" (booked)
-  const bookedDates = useMemo(() => {
-    // Generate a set of test booked dates (e.g. June 22-24, June 29)
-    return ['2026-06-22', '2026-06-23', '2026-06-24', '2026-06-28', '2026-06-29'];
-  }, []);
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
       
@@ -101,11 +92,15 @@ export default function DressDetail({ params }: PageProps) {
         {/* LEFT COLUMN: Gallery */}
         <div className="lg:col-span-5 space-y-4">
           <div className="aspect-[3/4] bg-stone-100 rounded-3xl overflow-hidden shadow-md">
-            <img
-              src={dress.images[selectedImageIdx] || dress.images[0]}
-              alt={dress.name}
-              className="w-full h-full object-cover object-center"
-            />
+            {dress.images[selectedImageIdx] || dress.images[0] ? (
+              <img
+                src={dress.images[selectedImageIdx] || dress.images[0]}
+                alt={dress.name}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <ImagePlaceholder label="Foto gaun kosong" />
+            )}
           </div>
           
           {/* Thumbnails */}
@@ -119,7 +114,7 @@ export default function DressDetail({ params }: PageProps) {
                     selectedImageIdx === idx ? 'border-gold shadow-sm' : 'border-transparent'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <ImagePlaceholder label="" />}
                 </button>
               ))}
             </div>
@@ -247,7 +242,7 @@ export default function DressDetail({ params }: PageProps) {
             <div className="space-y-2">
               <label className="text-xs font-semibold text-charcoal block">Pilih Tanggal Acara:</label>
               <AvailabilityCalendar
-                bookedDates={bookedDates}
+                bookedDates={[]}
                 selectedDate={selectedDate}
                 onChange={setSelectedDate}
               />

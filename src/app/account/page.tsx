@@ -1,33 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, ShoppingBag, FileText, Calendar, MessageSquare, ExternalLink, Plus } from 'lucide-react';
 import { Booking } from '@/types';
-import { INITIAL_BOOKINGS } from '@/data/mockData';
 import EmptyState from '@/components/ui/EmptyState';
+import { useBookings } from '@/data/db';
 
 export default function CustomerDashboard() {
   const router = useRouter();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-
-  // Load bookings on mount
-  useEffect(() => {
-    const savedBookingsStr = localStorage.getItem('elika_bookings');
-    if (savedBookingsStr) {
-      try {
-        const bookingsList = JSON.parse(savedBookingsStr);
-        setBookings(bookingsList);
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      // Pre-populate with initial mock bookings so dashboard is not empty!
-      localStorage.setItem('elika_bookings', JSON.stringify(INITIAL_BOOKINGS));
-      setBookings(INITIAL_BOOKINGS);
-    }
-  }, []);
+  const [bookings] = useBookings();
 
   const formatPrice = (price: string | number) => {
     if (typeof price === 'string') return price;

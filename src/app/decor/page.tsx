@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { Layers, CheckCircle, MessageSquare } from 'lucide-react';
 import { useDecor, useGallery, useSettings } from '@/data/db';
 import DecorPackageCard from '@/components/DecorPackageCard';
+import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
 
 export default function DecorPage() {
   const [decorations] = useDecor();
   const [gallery] = useGallery();
   const [settings] = useSettings();
 
-  const [selectedThemeFilter, setSelectedThemeFilter] = useState<'all' | 'Rustic' | 'White Classic' | 'Tradisional'>('all');
+  const [selectedThemeFilter, setSelectedThemeFilter] = useState('all');
   const decorPortfolios = gallery.filter((item) => item.category === 'decor');
 
   // Filtered packages
@@ -20,9 +21,10 @@ export default function DecorPage() {
 
   const categories = [
     { label: 'Semua Tema', value: 'all' },
-    { label: 'Rustic Romance', value: 'Rustic' },
-    { label: 'White Classic', value: 'White Classic' },
-    { label: 'Tradisional Jawa', value: 'Tradisional' }
+    ...Array.from(new Set(decorations.map((item) => item.theme).filter(Boolean))).map((theme) => ({
+      label: theme,
+      value: theme,
+    })),
   ];
 
   return (
@@ -42,7 +44,7 @@ export default function DecorPage() {
         {categories.map((cat, i) => (
           <button
             key={i}
-            onClick={() => setSelectedThemeFilter(cat.value as any)}
+            onClick={() => setSelectedThemeFilter(cat.value)}
             className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wider transition-all duration-300 ${
               selectedThemeFilter === cat.value
                 ? 'bg-gold text-white shadow-md'
@@ -95,11 +97,15 @@ export default function DecorPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {decorPortfolios.map((item) => (
             <div key={item.id} className="relative aspect-square overflow-hidden rounded-2xl group shadow-sm">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-full object-cover"
-              />
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <ImagePlaceholder label="Foto kosong" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/20 to-transparent flex flex-col justify-end p-5" />
               <div className="absolute bottom-4 left-4 right-4 text-white z-10">
                 <h4 className="font-serif font-bold text-base">{item.title}</h4>
