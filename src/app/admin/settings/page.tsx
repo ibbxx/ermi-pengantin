@@ -164,9 +164,9 @@ export default function AdminSettings() {
                       try {
                         const url = await uploadImage(file, 'settings');
                         setHeroImage(url);
-                      } catch (error) {
+                      } catch (error: any) {
                         console.error('Failed to upload image:', error);
-                        alert('Gagal mengunggah gambar.');
+                        alert(error instanceof Error ? error.message : 'Gagal mengunggah gambar.');
                       } finally {
                         setUploadingImage(false);
                       }

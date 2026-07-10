@@ -75,9 +75,9 @@ export default function AdminDecor() {
     try {
       const url = await uploadImage(file, 'decor');
       setImagesList([url]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gagal mengunggah gambar:', error);
-      alert('Gagal mengunggah gambar. Silakan coba lagi.');
+      alert(error instanceof Error ? error.message : 'Gagal mengunggah gambar. Silakan coba lagi.');
     } finally {
       setUploadingImage(false);
     }

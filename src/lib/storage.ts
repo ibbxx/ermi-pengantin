@@ -86,6 +86,12 @@ export async function uploadImage(file: File, folder: string): Promise<string> {
     });
 
   if (error) {
+    if (error.message?.includes('Bucket not found')) {
+      throw new Error(
+        `Bucket "elika-assets" tidak ditemukan di Supabase.\n\n` +
+        `Silakan buat bucket baru dengan nama "elika-assets" di dashboard Supabase Anda (Storage > New bucket) dan pastikan mencentang pilihan "Public".`
+      );
+    }
     throw new Error(`Gagal mengunggah gambar: ${error.message}`);
   }
 
