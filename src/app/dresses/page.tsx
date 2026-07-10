@@ -51,18 +51,10 @@ export default function DressesCatalog() {
     }
   }, [isMounted, priceLimits]);
 
-  // Dynamic categories based on mock categories and added dresses
+  // Dynamic categories based on active dresses in inventory
   const categories = useMemo(() => {
-    const defaultCategories = [
-      'Gaun Pengantin Modern',
-      'Kebaya Pengantin',
-      'Baju Adat',
-      'Jas Pengantin Pria',
-      'Bridesmaid',
-      'Family Dress'
-    ];
     const activeCats = isMounted ? dresses.map(d => d.category).filter(Boolean) : [];
-    const uniqueCats = Array.from(new Set([...defaultCategories, ...activeCats]));
+    const uniqueCats = Array.from(new Set(activeCats));
 
     const labelMapping: Record<string, string> = {
       'Gaun Pengantin Modern': 'Gaun Modern',
