@@ -22,13 +22,6 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
 
     const trimmedEmail = email.trim();
 
-    // Fallback local admin login
-    if (trimmedEmail.toLowerCase() === 'admin' && password === 'admin123') {
-      localStorage.setItem('elika_admin_logged_in', 'true');
-      onLoginSuccess();
-      return;
-    }
-
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,

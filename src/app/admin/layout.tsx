@@ -36,7 +36,30 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    setIsLoggedIn(localStorage.getItem('elika_admin_logged_in') === 'true');
+    
+    // Check real Supabase auth session instead of localStorage
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const hasSession = !!session;
+      setIsLoggedIn(hasSession);
+      if (hasSession) {
+        localStorage.setItem('elika_admin_logged_in', 'true');
+      } else {
+        localStorage.removeItem('elika_admin_logged_in');
+      }
+    });
+
+    // Listen for auth state changes (login/logout/token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const hasSession = !!session;
+      setIsLoggedIn(hasSession);
+      if (hasSession) {
+        localStorage.setItem('elika_admin_logged_in', 'true');
+      } else {
+        localStorage.removeItem('elika_admin_logged_in');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const sidebarLinks = [
