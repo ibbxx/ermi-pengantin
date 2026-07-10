@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, Trash2, Edit3, Scissors, Check, X, Upload, Loader2 } from 'lucide-react';
 import { useDresses } from '@/data/db';
 import { Dress, DressCategory } from '@/types';
@@ -65,9 +65,15 @@ export default function AdminDresses() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // Hydration state
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Dress form states
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<DressCategory>('Gaun Pengantin Modern');
+  const [category, setCategory] = useState<DressCategory>('');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
   const [price, setPrice] = useState(2500000);
@@ -83,16 +89,8 @@ export default function AdminDresses() {
 
   // Get all unique categories currently in the inventory
   const uniqueCategories = useMemo(() => {
-    const defaultCategories = [
-      'Gaun Pengantin Modern',
-      'Kebaya Pengantin',
-      'Baju Adat',
-      'Jas Pengantin Pria',
-      'Bridesmaid',
-      'Family Dress'
-    ];
     const activeCats = dresses.map((d) => d.category).filter(Boolean);
-    return Array.from(new Set([...defaultCategories, ...activeCats]));
+    return Array.from(new Set(activeCats));
   }, [dresses]);
 
   // Edit Dress tracking
@@ -107,8 +105,9 @@ export default function AdminDresses() {
   const handleOpenAddModal = () => {
     setEditingDress(null);
     setName('');
-    setCategory('Gaun Pengantin Modern');
-    setIsCustomCategory(false);
+    const defaultCat = uniqueCategories[0] || 'custom';
+    setCategory(defaultCat);
+    setIsCustomCategory(defaultCat === 'custom');
     setCustomCategory('');
     setPrice(2500000);
     setDeposit(1000000);
@@ -125,26 +124,9 @@ export default function AdminDresses() {
   const handleOpenEditModal = (dress: Dress) => {
     setEditingDress(dress);
     setName(dress.name);
-    
-    const defaultCategories = [
-      'Gaun Pengantin Modern',
-      'Kebaya Pengantin',
-      'Baju Adat',
-      'Jas Pengantin Pria',
-      'Bridesmaid',
-      'Family Dress'
-    ];
-    
-    if (defaultCategories.includes(dress.category)) {
-      setCategory(dress.category);
-      setIsCustomCategory(false);
-      setCustomCategory('');
-    } else {
-      setCategory('custom');
-      setIsCustomCategory(true);
-      setCustomCategory(dress.category);
-    }
-
+    setCategory(dress.category);
+    setIsCustomCategory(false);
+    setCustomCategory('');
     setPrice(dress.price);
     setDeposit(dress.deposit);
     setSizeInput(dress.sizes.join(', '));
@@ -269,6 +251,33 @@ export default function AdminDresses() {
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  // Render Skeleton during SSR and initial client hydration to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="space-y-6">
+        {/* Top Banner stats skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 animate-pulse">
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs h-20" />
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs h-20" />
+          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs h-20" />
+        </div>
+
+        {/* Header controls skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 bg-white p-4 rounded-xl border border-stone-200 shadow-xs animate-pulse h-16" />
+
+        {/* Dresses List Table skeleton */}
+        <div className="bg-white rounded-3xl overflow-hidden border border-stone-200 shadow-md animate-pulse p-6 space-y-4">
+          <div className="h-6 bg-stone-150 rounded w-1/4" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="h-12 bg-stone-150 rounded w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

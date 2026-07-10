@@ -21,6 +21,7 @@ import {
 
 import { useState, useEffect } from 'react';
 import AdminLoginForm from '@/components/AdminLoginForm';
+import { supabase } from '@/lib/supabase';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -58,8 +59,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return pathname?.startsWith(href);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Apakah Anda yakin ingin keluar dari panel admin?')) {
+      await supabase.auth.signOut();
       localStorage.removeItem('elika_admin_logged_in');
       setIsLoggedIn(false);
       router.push('/');

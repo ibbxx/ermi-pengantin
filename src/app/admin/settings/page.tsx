@@ -1,8 +1,58 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Settings, Info } from 'lucide-react';
+import { Save, Settings, Info, Upload, X, Loader2 } from 'lucide-react';
 import { useSettings } from '@/data/db';
+
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        const MAX_DIM = 1200;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let quality = 0.82;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        
+        while (dataUrl.length > 680000 && quality > 0.3) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
 
 export default function AdminSettings() {
   const [settings, setSettings] = useSettings();
@@ -14,6 +64,8 @@ export default function AdminSettings() {
   const [minDpPercent, setMinDpPercent] = useState(settings.minDpPercent);
   const [transportBase, setTransportBase] = useState(settings.transportBase);
   const [address, setAddress] = useState(settings.address);
+  const [heroImage, setHeroImage] = useState(settings.heroImage || '');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Sync local fields when settings is loaded/changed
   useEffect(() => {
@@ -23,6 +75,7 @@ export default function AdminSettings() {
     setMinDpPercent(settings.minDpPercent);
     setTransportBase(settings.transportBase);
     setAddress(settings.address);
+    setHeroImage(settings.heroImage || '');
   }, [settings]);
 
   const handleSave = (e: React.FormEvent) => {
@@ -33,7 +86,8 @@ export default function AdminSettings() {
       emailAdmin,
       minDpPercent,
       transportBase,
-      address
+      address,
+      heroImage
     });
     alert('Pengaturan butik telah berhasil diperbarui secara lokal!');
   };
@@ -117,6 +171,73 @@ export default function AdminSettings() {
               onChange={(e) => setTransportBase(Number(e.target.value))}
               className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
             />
+          </div>
+
+          {/* Hero Image Section Upload */}
+          <div className="space-y-1 sm:col-span-2 border-t border-stone-150 pt-4 mt-2">
+            <label className="font-semibold text-charcoal block">Gambar Latar Hero Section Utama (Beranda)</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mt-1.5">
+              
+              {/* Image Preview */}
+              <div className="md:col-span-1 relative h-32 bg-stone-100 rounded-xl overflow-hidden border border-stone-200 flex items-center justify-center">
+                {heroImage ? (
+                  <>
+                    <img
+                      src={heroImage}
+                      alt="Hero Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setHeroImage('')}
+                      className="absolute top-2 right-2 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-[10px] text-stone-400">Belum ada gambar</span>
+                )}
+              </div>
+
+              {/* Upload Input */}
+              <div className="md:col-span-2">
+                <label className="border-2 border-dashed border-stone-200 hover:border-gold rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all hover:bg-stone-50/50">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingImage(true);
+                      try {
+                        const compressed = await compressImage(file);
+                        setHeroImage(compressed);
+                      } catch (error) {
+                        console.error('Failed to compress image:', error);
+                        alert('Gagal memuat gambar.');
+                      } finally {
+                        setUploadingImage(false);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  {uploadingImage ? (
+                    <>
+                      <Loader2 className="h-5 w-5 text-gold animate-spin" />
+                      <span className="text-[10px] text-stone-500 font-medium">Sedang mengunggah...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5 text-stone-400" />
+                      <span className="text-[10px] font-semibold text-charcoal">Unggah Foto Hero Baru</span>
+                      <span className="text-[8px] text-stone-400">Format JPEG/PNG, rasio 16:9 direkomendasikan</span>
+                    </>
+                  )}
+                </label>
+              </div>
+
+            </div>
           </div>
         </div>
 
