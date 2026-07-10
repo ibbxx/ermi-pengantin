@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Lock, Eye, EyeOff, ShieldAlert, KeyRound } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 
 interface AdminLoginFormProps {
   onLoginSuccess: () => void;
@@ -39,9 +39,6 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
         
         {/* Top Header */}
         <div className="text-center space-y-1.5">
-          <div className="inline-flex p-2.5 bg-gold/10 border border-gold-light/20 rounded-xl text-gold-dark mb-1">
-            <KeyRound className="h-5 w-5 text-gold-dark" />
-          </div>
           <h1 className="text-xl md:text-2xl font-serif font-bold text-charcoal">
             Elika<span className="text-gold font-normal font-sans ml-1">&</span>
             <span className="text-gold"> Atelier</span>
