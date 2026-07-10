@@ -68,6 +68,8 @@ export default function AdminDresses() {
   // Dress form states
   const [name, setName] = useState('');
   const [category, setCategory] = useState<DressCategory>('Gaun Pengantin Modern');
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   const [price, setPrice] = useState(2500000);
   const [deposit, setDeposit] = useState(1000000);
   const [sizeInput, setSizeInput] = useState('S, M, L');
@@ -78,6 +80,20 @@ export default function AdminDresses() {
   const [status, setStatus] = useState<'available' | 'rented' | 'maintenance'>('available');
   const [imagesList, setImagesList] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Get all unique categories currently in the inventory
+  const uniqueCategories = useMemo(() => {
+    const defaultCategories = [
+      'Gaun Pengantin Modern',
+      'Kebaya Pengantin',
+      'Baju Adat',
+      'Jas Pengantin Pria',
+      'Bridesmaid',
+      'Family Dress'
+    ];
+    const activeCats = dresses.map((d) => d.category).filter(Boolean);
+    return Array.from(new Set([...defaultCategories, ...activeCats]));
+  }, [dresses]);
 
   // Edit Dress tracking
   const [editingDress, setEditingDress] = useState<Dress | null>(null);
@@ -92,6 +108,8 @@ export default function AdminDresses() {
     setEditingDress(null);
     setName('');
     setCategory('Gaun Pengantin Modern');
+    setIsCustomCategory(false);
+    setCustomCategory('');
     setPrice(2500000);
     setDeposit(1000000);
     setSizeInput('S, M, L');
@@ -107,7 +125,26 @@ export default function AdminDresses() {
   const handleOpenEditModal = (dress: Dress) => {
     setEditingDress(dress);
     setName(dress.name);
-    setCategory(dress.category);
+    
+    const defaultCategories = [
+      'Gaun Pengantin Modern',
+      'Kebaya Pengantin',
+      'Baju Adat',
+      'Jas Pengantin Pria',
+      'Bridesmaid',
+      'Family Dress'
+    ];
+    
+    if (defaultCategories.includes(dress.category)) {
+      setCategory(dress.category);
+      setIsCustomCategory(false);
+      setCustomCategory('');
+    } else {
+      setCategory('custom');
+      setIsCustomCategory(true);
+      setCustomCategory(dress.category);
+    }
+
     setPrice(dress.price);
     setDeposit(dress.deposit);
     setSizeInput(dress.sizes.join(', '));
@@ -124,6 +161,12 @@ export default function AdminDresses() {
     e.preventDefault();
     if (!name.trim()) return;
 
+    const finalCategory = category === 'custom' ? customCategory.trim() : category;
+    if (!finalCategory) {
+      alert('Kategori harus dipilih atau diisi.');
+      return;
+    }
+
     const sizesArray = sizeInput.split(',').map((s) => s.trim()).filter(Boolean);
     const colorsArray = colorInput.split(',').map((c) => c.trim()).filter(Boolean);
 
@@ -132,7 +175,7 @@ export default function AdminDresses() {
       const updatedDress: Dress = {
         ...editingDress,
         name,
-        category,
+        category: finalCategory,
         price,
         deposit,
         sizes: sizesArray,
@@ -151,7 +194,7 @@ export default function AdminDresses() {
         id: `dress-${Date.now()}`,
         slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         name,
-        category,
+        category: finalCategory,
         price,
         deposit,
         sizes: sizesArray,
@@ -369,17 +412,37 @@ export default function AdminDresses() {
                   <label className="font-semibold text-charcoal">Kategori</label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as DressCategory)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCategory(val);
+                      if (val === 'custom') {
+                        setIsCustomCategory(true);
+                      } else {
+                        setIsCustomCategory(false);
+                      }
+                    }}
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
                   >
-                    <option value="Gaun Pengantin Modern">Gaun Pengantin Modern</option>
-                    <option value="Kebaya Pengantin">Kebaya Pengantin</option>
-                    <option value="Baju Adat">Baju Adat</option>
-                    <option value="Jas Pengantin Pria">Jas Pengantin Pria</option>
-                    <option value="Bridesmaid">Bridesmaid</option>
-                    <option value="Family Dress">Family Dress</option>
+                    {uniqueCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                    <option value="custom">+ Tambah Kategori Baru...</option>
                   </select>
                 </div>
+
+                {isCustomCategory && (
+                  <div className="col-span-2 space-y-1">
+                    <label className="font-semibold text-charcoal">Nama Kategori Baru</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Masukkan nama kategori baru..."
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="font-semibold text-charcoal">Bahan Utama</label>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, SlidersHorizontal, Calendar, ArrowUpDown } from 'lucide-react';
 import { useDresses } from '@/data/db';
 import { DressCategory } from '@/types';
@@ -9,6 +9,12 @@ import EmptyState from '@/components/ui/EmptyState';
 
 export default function DressesCatalog() {
   const [dresses] = useDresses();
+
+  // Hydration state
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,18 +25,99 @@ export default function DressesCatalog() {
   const [checkDate, setCheckDate] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('popular');
 
-  const categories: { label: string; value: string }[] = [
-    { label: 'Semua Koleksi', value: 'all' },
-    { label: 'Gaun Modern', value: 'Gaun Pengantin Modern' },
-    { label: 'Kebaya Pengantin', value: 'Kebaya Pengantin' },
-    { label: 'Baju Adat', value: 'Baju Adat' },
-    { label: 'Jas Pria', value: 'Jas Pengantin Pria' },
-    { label: 'Bridesmaid', value: 'Bridesmaid' },
-    { label: 'Family Dress', value: 'Family Dress' },
-  ];
+  // Dynamic price limits based on available dresses
+  const priceLimits = useMemo(() => {
+    if (!isMounted || !dresses || dresses.length === 0) {
+      return { min: 500000, max: 4000000 };
+    }
+    const prices = dresses.map((d) => d.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return {
+      min: Math.floor(min / 100000) * 100000 || 500000,
+      max: Math.ceil(max / 100000) * 100000 || 4000000,
+    };
+  }, [dresses, isMounted]);
 
-  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
-  const colors = ['Ivory', 'White', 'Champagne', 'Gold', 'Nude', 'Red', 'Green', 'Gray', 'Black'];
+  // Sync maxPrice when price limits change
+  useEffect(() => {
+    if (isMounted) {
+      setMaxPrice((prev) => {
+        if (prev === 4000000 || prev > priceLimits.max || prev < priceLimits.min) {
+          return priceLimits.max;
+        }
+        return prev;
+      });
+    }
+  }, [isMounted, priceLimits]);
+
+  // Dynamic categories based on mock categories and added dresses
+  const categories = useMemo(() => {
+    const defaultCategories = [
+      'Gaun Pengantin Modern',
+      'Kebaya Pengantin',
+      'Baju Adat',
+      'Jas Pengantin Pria',
+      'Bridesmaid',
+      'Family Dress'
+    ];
+    const activeCats = isMounted ? dresses.map(d => d.category).filter(Boolean) : [];
+    const uniqueCats = Array.from(new Set([...defaultCategories, ...activeCats]));
+
+    const labelMapping: Record<string, string> = {
+      'Gaun Pengantin Modern': 'Gaun Modern',
+      'Kebaya Pengantin': 'Kebaya Pengantin',
+      'Baju Adat': 'Baju Adat',
+      'Jas Pengantin Pria': 'Jas Pria',
+      'Bridesmaid': 'Bridesmaid',
+      'Family Dress': 'Family Dress'
+    };
+
+    const items = uniqueCats.map(cat => ({
+      label: labelMapping[cat] || cat,
+      value: cat
+    }));
+
+    return [
+      { label: 'Semua Koleksi', value: 'all' },
+      ...items
+    ];
+  }, [dresses, isMounted]);
+
+  // Dynamic sizes based on available dresses
+  const sizes = useMemo(() => {
+    const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const activeSizes = isMounted ? dresses.flatMap(d => d.sizes || []) : [];
+    const unique = Array.from(new Set([
+      ...defaultSizes,
+      ...activeSizes.map(s => s.trim().toUpperCase())
+    ].filter(Boolean)));
+
+    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+    return unique.sort((a, b) => {
+      const idxA = sizeOrder.indexOf(a);
+      const idxB = sizeOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [dresses, isMounted]);
+
+  // Dynamic colors based on available dresses
+  const colors = useMemo(() => {
+    const defaultColors = ['Ivory', 'White', 'Champagne', 'Gold', 'Nude', 'Red', 'Green', 'Gray', 'Black'];
+    const activeColors = isMounted ? dresses.flatMap(d => d.colors || []) : [];
+    const unique = Array.from(new Set([
+      ...defaultColors,
+      ...activeColors.map(c => {
+        const trimmed = c.trim();
+        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+      })
+    ].filter(Boolean)));
+    
+    return unique.sort((a, b) => a.localeCompare(b));
+  }, [dresses, isMounted]);
 
   // Apply filters
   const filteredDresses = useMemo(() => {
@@ -78,7 +165,7 @@ export default function DressesCatalog() {
     setSelectedCategory('all');
     setSelectedSize('all');
     setSelectedColor('all');
-    setMaxPrice(4000000);
+    setMaxPrice(priceLimits.max);
     setCheckDate('');
     setSortBy('popular');
   };
@@ -205,16 +292,16 @@ export default function DressesCatalog() {
             </div>
             <input
               type="range"
-              min="500000"
-              max="4000000"
+              min={priceLimits.min}
+              max={priceLimits.max}
               step="100000"
-              value={maxPrice}
+              value={Math.min(maxPrice, priceLimits.max)}
               onChange={(e) => setMaxPrice(Number(e.target.value))}
               className="w-full accent-gold cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-stone-400">
-              <span>Rp 500rb</span>
-              <span>Rp 4jt</span>
+              <span>{formatPrice(priceLimits.min)}</span>
+              <span>{formatPrice(priceLimits.max)}</span>
             </div>
           </div>
 
@@ -225,7 +312,13 @@ export default function DressesCatalog() {
           {/* Top Bar (Results count & Sorting) */}
           <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gold-light/10 shadow-sm gap-4">
             <span className="text-xs text-stone-500 font-medium">
-              Menampilkan <span className="font-bold text-charcoal">{filteredDresses.length}</span> gaun pengantin
+              {!isMounted ? (
+                <span className="inline-block w-36 h-4 bg-stone-150 animate-pulse rounded-md align-middle" />
+              ) : (
+                <>
+                  Menampilkan <span className="font-bold text-charcoal">{filteredDresses.length}</span> gaun pengantin
+                </>
+              )}
             </span>
             
             {/* Sorting Dropdown */}
@@ -245,7 +338,20 @@ export default function DressesCatalog() {
           </div>
 
           {/* Catalog Cards Grid */}
-          {filteredDresses.length > 0 ? (
+          {!isMounted ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="bg-white rounded-3xl overflow-hidden border border-gold-light/10 shadow-sm animate-pulse space-y-4 p-5">
+                  <div className="aspect-[3/4] bg-stone-150 rounded-2xl w-full" />
+                  <div className="space-y-2">
+                    <div className="h-4.5 bg-stone-150 rounded-md w-3/4" />
+                    <div className="h-3.5 bg-stone-150 rounded-md w-1/2" />
+                    <div className="h-5 bg-stone-150 rounded-md w-1/3 pt-1" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredDresses.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDresses.map((dress) => (
                 <DressCard key={dress.id} dress={dress} />
