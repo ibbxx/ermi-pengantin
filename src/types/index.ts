@@ -1,10 +1,4 @@
-export type DressCategory =
-  | 'Gaun Pengantin Modern'
-  | 'Kebaya Pengantin'
-  | 'Baju Adat'
-  | 'Jas Pengantin Pria'
-  | 'Bridesmaid'
-  | 'Family Dress';
+export type DressCategory = string;
 
 export interface Dress {
   id: string;
