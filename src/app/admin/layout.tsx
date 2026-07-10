@@ -19,6 +19,9 @@ import {
   UserCheck
 } from 'lucide-react';
 
+import { useState, useEffect } from 'react';
+import AdminLoginForm from '@/components/AdminLoginForm';
+
 interface AdminLayoutProps {
   children: ReactNode;
 }
@@ -26,6 +29,14 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [isMounted, setIsMounted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setIsLoggedIn(localStorage.getItem('elika_admin_logged_in') === 'true');
+  }, []);
 
   const sidebarLinks = [
     { name: 'Dashboard Overview', href: '/admin', icon: LayoutDashboard },
@@ -49,9 +60,23 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleLogout = () => {
     if (confirm('Apakah Anda yakin ingin keluar dari panel admin?')) {
+      localStorage.removeItem('elika_admin_logged_in');
+      setIsLoggedIn(false);
       router.push('/');
     }
   };
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center -mt-20">
+        <div className="animate-pulse text-stone-500 font-serif text-sm">Memuat Panel Admin...</div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <AdminLoginForm onLoginSuccess={() => setIsLoggedIn(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-stone-100 flex flex-col md:flex-row -mt-20">
