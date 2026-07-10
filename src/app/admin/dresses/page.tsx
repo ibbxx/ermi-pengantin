@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { Search, Plus, Trash2, Edit3, Scissors, Check, X } from 'lucide-react';
-import { MOCK_DRESSES } from '@/data/mockData';
+import { useDresses } from '@/data/db';
 import { Dress, DressCategory } from '@/types';
 
 export default function AdminDresses() {
-  const [dresses, setDresses] = useState<Dress[]>(MOCK_DRESSES);
+  const [dresses, setDresses] = useDresses();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 

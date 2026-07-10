@@ -4,7 +4,7 @@ import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Star, Shield, RefreshCw, HelpCircle, Check, ArrowLeft, MessageCircle } from 'lucide-react';
-import { MOCK_DRESSES } from '@/data/mockData';
+import { useDresses, useSettings } from '@/data/db';
 import DressCard from '@/components/DressCard';
 import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import EmptyState from '@/components/ui/EmptyState';
@@ -16,11 +16,13 @@ interface PageProps {
 export default function DressDetail({ params }: PageProps) {
   const { slug } = use(params);
   const router = useRouter();
+  const [dresses] = useDresses();
+  const [settings] = useSettings();
 
   // Find the dress
   const dress = useMemo(() => {
-    return MOCK_DRESSES.find((d) => d.slug === slug);
-  }, [slug]);
+    return dresses.find((d) => d.slug === slug);
+  }, [dresses, slug]);
 
   // States
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
@@ -42,7 +44,7 @@ export default function DressDetail({ params }: PageProps) {
   }
 
   // Similar products (same category, excluding current dress)
-  const similarDresses = MOCK_DRESSES.filter(
+  const similarDresses = dresses.filter(
     (d) => d.category === dress.category && d.id !== dress.id
   ).slice(0, 3);
 
@@ -56,7 +58,7 @@ export default function DressDetail({ params }: PageProps) {
 
   const handleWhatsAppConsult = () => {
     const text = encodeURIComponent(`Halo Elika Wedding, saya tertarik konsultasi gaun "${dress.name}".`);
-    window.open(`https://wa.me/6281234567890?text=${text}`, '_blank');
+    window.open(`https://wa.me/${settings.whatsappAdmin}?text=${text}`, '_blank');
   };
 
   const handleBooking = () => {

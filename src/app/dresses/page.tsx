@@ -2,12 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import { Search, SlidersHorizontal, Calendar, ArrowUpDown } from 'lucide-react';
-import { MOCK_DRESSES } from '@/data/mockData';
+import { useDresses } from '@/data/db';
 import { DressCategory } from '@/types';
 import DressCard from '@/components/DressCard';
 import EmptyState from '@/components/ui/EmptyState';
 
 export default function DressesCatalog() {
+  const [dresses] = useDresses();
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -32,7 +34,7 @@ export default function DressesCatalog() {
 
   // Apply filters
   const filteredDresses = useMemo(() => {
-    return MOCK_DRESSES.filter((dress) => {
+    return dresses.filter((dress) => {
       // 1. Search Query
       const matchSearch =
         dress.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

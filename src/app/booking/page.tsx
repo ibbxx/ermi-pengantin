@@ -4,12 +4,19 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, Calendar, MapPin, User, Phone, Mail, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { MOCK_DRESSES, MOCK_MAKEUP, MOCK_DECOR, MOCK_PACKAGES } from '@/data/mockData';
+import { useDresses, useMakeup, useDecor, usePackages, useSettings } from '@/data/db';
 import { Booking } from '@/types';
 
 // Wrap the actual form in a suspense boundary due to useSearchParams
 function BookingFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [dresses] = useDresses();
+  const [makeup] = useMakeup();
+  const [decorations] = useDecor();
+  const [packages] = usePackages();
+  const [settings] = useSettings();
 
   // Pre-filled URL parameters
   const preSelectedDressId = searchParams?.get('dressId') || '';
@@ -36,13 +43,13 @@ function BookingFormContent() {
   const [selectPackageActive, setSelectPackageActive] = useState(!!preSelectedPackageId);
 
   // Selected Item dropdown values
-  const [selectedDressId, setSelectedDressId] = useState(preSelectedDressId || MOCK_DRESSES[0].id);
+  const [selectedDressId, setSelectedDressId] = useState(preSelectedDressId || (dresses[0]?.id || ''));
   const [selectedSize, setSelectedSize] = useState(preSelectedSize);
-  const [selectedColor, setSelectedColor] = useState(preSelectedColor || MOCK_DRESSES[0].colors[0]);
+  const [selectedColor, setSelectedColor] = useState(preSelectedColor || (dresses[0]?.colors[0] || ''));
   
-  const [selectedMakeupId, setSelectedMakeupId] = useState(preSelectedMakeupId || MOCK_MAKEUP[0].id);
-  const [selectedDecorId, setSelectedDecorId] = useState(preSelectedDecorId || MOCK_DECOR[0].id);
-  const [selectedPackageId, setSelectedPackageId] = useState(preSelectedPackageId || MOCK_PACKAGES[0].id);
+  const [selectedMakeupId, setSelectedMakeupId] = useState(preSelectedMakeupId || (makeup[0]?.id || ''));
+  const [selectedDecorId, setSelectedDecorId] = useState(preSelectedDecorId || (decorations[0]?.id || ''));
+  const [selectedPackageId, setSelectedPackageId] = useState(preSelectedPackageId || (packages[0]?.id || ''));
 
   const [notes, setNotes] = useState('');
   const [paymentType, setPaymentType] = useState<'dp' | 'full'>('dp');
@@ -51,13 +58,39 @@ function BookingFormContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Sync initial ids once database is loaded
+  useEffect(() => {
+    if (!selectedDressId && dresses.length > 0) {
+      setSelectedDressId(dresses[0].id);
+      setSelectedColor(dresses[0].colors[0]);
+    }
+  }, [dresses, selectedDressId]);
+
+  useEffect(() => {
+    if (!selectedMakeupId && makeup.length > 0) {
+      setSelectedMakeupId(makeup[0].id);
+    }
+  }, [makeup, selectedMakeupId]);
+
+  useEffect(() => {
+    if (!selectedDecorId && decorations.length > 0) {
+      setSelectedDecorId(decorations[0].id);
+    }
+  }, [decorations, selectedDecorId]);
+
+  useEffect(() => {
+    if (!selectedPackageId && packages.length > 0) {
+      setSelectedPackageId(packages[0].id);
+    }
+  }, [packages, selectedPackageId]);
+
   // Auto select Dress Color if dress changes
   useEffect(() => {
-    const dress = MOCK_DRESSES.find((d) => d.id === selectedDressId);
+    const dress = dresses.find((d) => d.id === selectedDressId);
     if (dress && !preSelectedColor) {
       setSelectedColor(dress.colors[0]);
     }
-  }, [selectedDressId]);
+  }, [selectedDressId, dresses]);
 
   // If wedding package is active, other services are disabled/cleared (since package is all-in-one)
   useEffect(() => {
@@ -83,14 +116,14 @@ function BookingFormContent() {
     let packageSelected: Booking['servicesSelected']['weddingPackage'] = undefined;
 
     if (selectPackageActive) {
-      const pkg = MOCK_PACKAGES.find((p) => p.id === selectedPackageId);
+      const pkg = packages.find((p) => p.id === selectedPackageId);
       if (pkg) {
         subtotal += pkg.price;
         packageSelected = { id: pkg.id, name: pkg.name, price: pkg.price };
       }
     } else {
       if (selectDressActive) {
-        const dress = MOCK_DRESSES.find((d) => d.id === selectedDressId);
+        const dress = dresses.find((d) => d.id === selectedDressId);
         if (dress) {
           subtotal += dress.price;
           dressesSelected.push({
@@ -104,14 +137,14 @@ function BookingFormContent() {
         }
       }
       if (selectMakeupActive) {
-        const mua = MOCK_MAKEUP.find((m) => m.id === selectedMakeupId);
+        const mua = makeup.find((m) => m.id === selectedMakeupId);
         if (mua) {
           subtotal += mua.price;
           makeupSelected = { id: mua.id, name: mua.name, price: mua.price };
         }
       }
       if (selectDecorActive) {
-        const decor = MOCK_DECOR.find((d) => d.id === selectedDecorId);
+        const decor = decorations.find((d) => d.id === selectedDecorId);
         if (decor) {
           subtotal += decor.price;
           decorSelected = { id: decor.id, name: decor.name, price: decor.price };
@@ -119,17 +152,17 @@ function BookingFormContent() {
       }
     }
 
-    const transportFee = subtotal > 0 ? 150000 : 0; // Standard transport charge
+    const transportFee = subtotal > 0 ? settings.transportBase : 0; // Dynamic transport charge
     const total = subtotal + transportFee;
 
     // Minimum DP required:
-    // If package, check package's required DP. If standard ala carte, say 30% of total
+    // If package, check package's required DP. If standard ala carte, say minDpPercent of total
     let minDp = 0;
     if (selectPackageActive) {
-      const pkg = MOCK_PACKAGES.find((p) => p.id === selectedPackageId);
+      const pkg = packages.find((p) => p.id === selectedPackageId);
       minDp = pkg ? pkg.depositRequired : 0;
     } else {
-      minDp = Math.round(subtotal * 0.3);
+      minDp = Math.round(subtotal * (settings.minDpPercent / 100));
     }
 
     return {
@@ -416,7 +449,7 @@ function BookingFormContent() {
                     onChange={(e) => setSelectedPackageId(e.target.value)}
                     className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
                   >
-                    {MOCK_PACKAGES.map((pkg) => (
+                    {packages.map((pkg) => (
                       <option key={pkg.id} value={pkg.id}>
                         {pkg.name} - {formatPrice(pkg.price)}
                       </option>
@@ -456,7 +489,7 @@ function BookingFormContent() {
                         onChange={(e) => setSelectedDressId(e.target.value)}
                         className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
                       >
-                        {MOCK_DRESSES.map((d) => (
+                        {dresses.map((d) => (
                           <option key={d.id} value={d.id}>
                             {d.name} ({d.category}) - {formatPrice(d.price)}
                           </option>
@@ -470,7 +503,7 @@ function BookingFormContent() {
                         onChange={(e) => setSelectedSize(e.target.value)}
                         className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
                       >
-                        {MOCK_DRESSES.find((d) => d.id === selectedDressId)?.sizes.map((s) => (
+                        {dresses.find((d) => d.id === selectedDressId)?.sizes.map((s) => (
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
@@ -482,7 +515,7 @@ function BookingFormContent() {
                         onChange={(e) => setSelectedColor(e.target.value)}
                         className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
                       >
-                        {MOCK_DRESSES.find((d) => d.id === selectedDressId)?.colors.map((c) => (
+                        {dresses.find((d) => d.id === selectedDressId)?.colors.map((c) => (
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
@@ -513,7 +546,7 @@ function BookingFormContent() {
                       onChange={(e) => setSelectedMakeupId(e.target.value)}
                       className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
                     >
-                      {MOCK_MAKEUP.map((m) => (
+                      {makeup.map((m) => (
                         <option key={m.id} value={m.id}>
                           {m.name} - {formatPrice(m.price)}
                         </option>
@@ -545,7 +578,7 @@ function BookingFormContent() {
                       onChange={(e) => setSelectedDecorId(e.target.value)}
                       className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
                     >
-                      {MOCK_DECOR.map((d) => (
+                      {decorations.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name} ({d.theme}) - Mulai {formatPrice(d.price)}
                         </option>
@@ -589,7 +622,7 @@ function BookingFormContent() {
                         : 'bg-white border-stone-200 text-charcoal hover:border-gold-light'
                     }`}
                   >
-                    <span className="font-bold">Bayar DP Dulu ({selectPackageActive ? 'Tercantum' : '30%'})</span>
+                    <span className="font-bold">Bayar DP Dulu ({selectPackageActive ? 'Tercantum' : `${settings.minDpPercent}%`})</span>
                     <span className="text-[10px] text-stone-500 mt-1">
                       Bayar minimal {formatPrice(calculations.minDp)} untuk aman jadwal
                     </span>
@@ -658,8 +691,8 @@ function BookingFormContent() {
               {selectDressActive && (
                 <div className="pt-3 first:pt-0">
                   <div className="flex justify-between font-bold text-charcoal">
-                    <span>{MOCK_DRESSES.find((d) => d.id === selectedDressId)?.name}</span>
-                    <span>{formatPrice(MOCK_DRESSES.find((d) => d.id === selectedDressId)?.price || 0)}</span>
+                    <span>{dresses.find((d) => d.id === selectedDressId)?.name}</span>
+                    <span>{formatPrice(dresses.find((d) => d.id === selectedDressId)?.price || 0)}</span>
                   </div>
                   <div className="text-[10px] text-stone-500 mt-0.5 space-x-2">
                     <span>Ukuran: {selectedSize}</span>
@@ -673,8 +706,8 @@ function BookingFormContent() {
               {selectMakeupActive && (
                 <div className="pt-3 first:pt-0">
                   <div className="flex justify-between font-bold text-charcoal">
-                    <span>{MOCK_MAKEUP.find((m) => m.id === selectedMakeupId)?.name}</span>
-                    <span>{formatPrice(MOCK_MAKEUP.find((m) => m.id === selectedMakeupId)?.price || 0)}</span>
+                    <span>{makeup.find((m) => m.id === selectedMakeupId)?.name}</span>
+                    <span>{formatPrice(makeup.find((m) => m.id === selectedMakeupId)?.price || 0)}</span>
                   </div>
                   <span className="text-[10px] text-stone-500 block mt-0.5">Jasa Makeup Pengantin</span>
                 </div>
@@ -684,8 +717,8 @@ function BookingFormContent() {
               {selectDecorActive && (
                 <div className="pt-3 first:pt-0">
                   <div className="flex justify-between font-bold text-charcoal">
-                    <span>{MOCK_DECOR.find((d) => d.id === selectedDecorId)?.name}</span>
-                    <span>{formatPrice(MOCK_DECOR.find((d) => d.id === selectedDecorId)?.price || 0)}</span>
+                    <span>{decorations.find((d) => d.id === selectedDecorId)?.name}</span>
+                    <span>{formatPrice(decorations.find((d) => d.id === selectedDecorId)?.price || 0)}</span>
                   </div>
                   <span className="text-[10px] text-stone-500 block mt-0.5">Dekorasi Pelaminan Venue</span>
                 </div>
@@ -695,8 +728,8 @@ function BookingFormContent() {
               {selectPackageActive && (
                 <div className="pt-3 first:pt-0">
                   <div className="flex justify-between font-bold text-charcoal">
-                    <span>{MOCK_PACKAGES.find((p) => p.id === selectedPackageId)?.name}</span>
-                    <span>{formatPrice(MOCK_PACKAGES.find((p) => p.id === selectedPackageId)?.price || 0)}</span>
+                    <span>{packages.find((p) => p.id === selectedPackageId)?.name}</span>
+                    <span>{formatPrice(packages.find((p) => p.id === selectedPackageId)?.price || 0)}</span>
                   </div>
                   <span className="text-[10px] text-stone-500 block mt-0.5">Paket Pernikahan All-in-One</span>
                 </div>

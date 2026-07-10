@@ -1,23 +1,45 @@
 'use client';
 
-import { useState } from 'react';
-import { Save, Shield, Settings, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, Settings, Info } from 'lucide-react';
+import { useSettings } from '@/data/db';
 
 export default function AdminSettings() {
-  const [shopName, setShopName] = useState('Elika Wedding Organizer & Atelier');
-  const [whatsappAdmin, setWhatsappAdmin] = useState('081234567890');
-  const [emailAdmin, setEmailAdmin] = useState('info@elikawedding.com');
-  const [minDpPercent, setMinDpPercent] = useState(30);
-  const [transportBase, setTransportBase] = useState(150000);
-  const [address, setAddress] = useState('Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730');
+  const [settings, setSettings] = useSettings();
+
+  // Local state for form fields to handle user input before saving
+  const [shopName, setShopName] = useState(settings.shopName);
+  const [whatsappAdmin, setWhatsappAdmin] = useState(settings.whatsappAdmin);
+  const [emailAdmin, setEmailAdmin] = useState(settings.emailAdmin);
+  const [minDpPercent, setMinDpPercent] = useState(settings.minDpPercent);
+  const [transportBase, setTransportBase] = useState(settings.transportBase);
+  const [address, setAddress] = useState(settings.address);
+
+  // Sync local fields when settings is loaded/changed
+  useEffect(() => {
+    setShopName(settings.shopName);
+    setWhatsappAdmin(settings.whatsappAdmin);
+    setEmailAdmin(settings.emailAdmin);
+    setMinDpPercent(settings.minDpPercent);
+    setTransportBase(settings.transportBase);
+    setAddress(settings.address);
+  }, [settings]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    setSettings({
+      shopName,
+      whatsappAdmin,
+      emailAdmin,
+      minDpPercent,
+      transportBase,
+      address
+    });
     alert('Pengaturan butik telah berhasil diperbarui secara lokal!');
   };
 
   return (
-    <div className="max-w-2xl bg-white p-6 md:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6 text-xs">
+    <div className="max-w-2xl bg-white p-6 md:p-8 rounded-3xl border border-stone-200 shadow-md space-y-6 text-xs animate-fade-in">
       
       <div>
         <h2 className="font-serif font-bold text-base text-charcoal flex items-center gap-1.5 border-b border-stone-150 pb-3">
@@ -34,6 +56,7 @@ export default function AdminSettings() {
             <label className="font-semibold text-charcoal block">Nama Bisnis / Toko</label>
             <input
               type="text"
+              required
               value={shopName}
               onChange={(e) => setShopName(e.target.value)}
               className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
@@ -41,12 +64,14 @@ export default function AdminSettings() {
           </div>
 
           <div className="space-y-1">
-            <label className="font-semibold text-charcoal block">Nomor WhatsApp Admin (Tombol WA)</label>
+            <label className="font-semibold text-charcoal block">Nomor WhatsApp Admin (Untuk Tombol WA)</label>
             <input
               type="text"
+              required
               value={whatsappAdmin}
               onChange={(e) => setWhatsappAdmin(e.target.value)}
               className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
+              placeholder="Contoh: 6281234567890 (Gunakan kode negara)"
             />
           </div>
 
@@ -54,9 +79,10 @@ export default function AdminSettings() {
             <label className="font-semibold text-charcoal block">Email Bisnis</label>
             <input
               type="email"
+              required
               value={emailAdmin}
               onChange={(e) => setEmailAdmin(e.target.value)}
-              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
             />
           </div>
 
@@ -64,9 +90,10 @@ export default function AdminSettings() {
             <label className="font-semibold text-charcoal block">Persentase DP Minimum (%)</label>
             <input
               type="number"
+              required
               value={minDpPercent}
               onChange={(e) => setMinDpPercent(Number(e.target.value))}
-              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
             />
           </div>
 
@@ -74,9 +101,10 @@ export default function AdminSettings() {
             <label className="font-semibold text-charcoal block">Alamat Kantor / Galeri Butik</label>
             <textarea
               rows={2}
+              required
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none resize-none"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold resize-none"
             />
           </div>
 
@@ -84,33 +112,34 @@ export default function AdminSettings() {
             <label className="font-semibold text-charcoal block">Tarif Dasar Transportasi Alat (Rp)</label>
             <input
               type="number"
+              required
               value={transportBase}
               onChange={(e) => setTransportBase(Number(e.target.value))}
-              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none"
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
             />
           </div>
         </div>
 
         {/* Security / Backup stamp */}
         <div className="flex gap-2 items-start bg-ivory p-4 rounded-2xl border border-gold-light/20 text-[10px] text-stone-500 leading-normal">
-          <Info className="h-4 w-4 text-gold-dark flex-shrink-0 mt-0.5" />
+          <Info className="h-4.5 w-4.5 text-gold-dark flex-shrink-0 mt-0.5" />
           <p>
             Perubahan konfigurasi di halaman ini secara langsung memengaruhi logika kalkulasi pada halaman form booking serta kontak nomor tujuan tombol konsultasi melayang secara dinamis.
           </p>
         </div>
 
-        {/* Submit */}
-        <div className="pt-2">
+        {/* Save Button */}
+        <div className="pt-2 flex justify-end">
           <button
             type="submit"
-            className="w-full py-3.5 bg-gold hover:bg-gold-dark text-white font-bold rounded-xl uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5"
+            className="px-6 py-2.5 bg-gold hover:bg-gold-dark text-white font-bold rounded-xl uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md cursor-pointer"
           >
-            <Save className="h-4 w-4" /> Simpan Pengaturan
+            <Save className="h-4 w-4" />
+            <span>Simpan Perubahan</span>
           </button>
         </div>
 
       </form>
-
     </div>
   );
 }

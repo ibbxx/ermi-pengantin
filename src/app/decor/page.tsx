@@ -2,15 +2,19 @@
 
 import { useState } from 'react';
 import { Layers, CheckCircle, MessageSquare } from 'lucide-react';
-import { MOCK_DECOR, MOCK_GALLERY } from '@/data/mockData';
+import { useDecor, useGallery, useSettings } from '@/data/db';
 import DecorPackageCard from '@/components/DecorPackageCard';
 
 export default function DecorPage() {
+  const [decorations] = useDecor();
+  const [gallery] = useGallery();
+  const [settings] = useSettings();
+
   const [selectedThemeFilter, setSelectedThemeFilter] = useState<'all' | 'Rustic' | 'White Classic' | 'Tradisional'>('all');
-  const decorPortfolios = MOCK_GALLERY.filter((item) => item.category === 'decor');
+  const decorPortfolios = gallery.filter((item) => item.category === 'decor');
 
   // Filtered packages
-  const filteredPackages = MOCK_DECOR.filter((pkg) => {
+  const filteredPackages = decorations.filter((pkg) => {
     return selectedThemeFilter === 'all' || pkg.theme === selectedThemeFilter;
   });
 
@@ -29,20 +33,20 @@ export default function DecorPage() {
         <span className="text-xs uppercase tracking-widest text-gold-dark font-bold font-semibold">Wedding Decoration Atelier</span>
         <h1 className="text-3xl md:text-5xl font-serif font-bold text-charcoal">Dekorasi Pernikahan</h1>
         <p className="text-xs text-stone-muted">
-          Panggung pelaminan megah, lorong lampu romantis, gerbang bunga segar, dan photobooth cantik yang disesuaikan khusus untuk keindahan venue Anda.
+          Backdrop megah panggung pelaminan, pencahayaan dramatis, dan ornamen bunga segar yang ditata presisi sesuai dengan impian Anda.
         </p>
       </div>
 
-      {/* Theme Filters Tab */}
-      <div className="flex justify-center gap-2">
-        {categories.map((cat) => (
+      {/* Theme Filters */}
+      <div className="flex flex-wrap gap-2 justify-center">
+        {categories.map((cat, i) => (
           <button
-            key={cat.value}
+            key={i}
             onClick={() => setSelectedThemeFilter(cat.value as any)}
-            className={`text-xs px-4 py-2 rounded-full font-semibold border transition-all ${
+            className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wider transition-all duration-300 ${
               selectedThemeFilter === cat.value
-                ? 'bg-gold border-gold text-white shadow-md'
-                : 'bg-white border-stone-200 text-stone-600 hover:border-gold-light'
+                ? 'bg-gold text-white shadow-md'
+                : 'bg-white hover:bg-stone-50 text-stone-600 border border-stone-200'
             }`}
           >
             {cat.label}
@@ -52,48 +56,40 @@ export default function DecorPage() {
 
       {/* Decor Packages Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {filteredPackages.map((pkg) => (
-          <DecorPackageCard key={pkg.id} pkg={pkg} />
+        {filteredPackages.map((decor) => (
+          <DecorPackageCard key={decor.id} pkg={decor} />
         ))}
       </div>
 
-      {/* Venue Fit Guide */}
-      <div className="bg-ivory rounded-3xl p-8 md:p-12 border border-gold-light/20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* Quality standards */}
+      <div className="bg-ivory py-12 px-6 md:px-12 rounded-3xl border border-gold-light/20 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         <div className="space-y-4">
-          <span className="text-xs uppercase tracking-widest text-gold-dark font-bold">Panduan Venue</span>
-          <h2 className="text-2xl md:text-3xl font-serif font-bold text-charcoal">Penyesuaian Skala Ruangan (Venue Fitting)</h2>
-          <p className="text-xs text-stone-600 leading-relaxed">
-            Setiap panggung pelaminan kami dapat disesuaikan lebarnya mulai dari 4 meter (untuk area rumah/outdoor kecil) hingga 16 meter (untuk gedung ballroom hotel besar). Tim kami akan melakukan survey lokasi H-14 sebelum acara untuk melakukan pengukuran presisi.
+          <span className="text-[10px] uppercase font-bold tracking-widest text-gold-dark">Standar Dekorasi</span>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold text-charcoal leading-tight">Keindahan Detail Estetika Yang Rapi & Aman</h2>
+          <p className="text-xs text-stone-600 leading-relaxed font-light">
+            Kami mengutamakan kesegaran kelopak bunga mawar, pemasangan lampu sorot panggung yang presisi, dan kekuatan konstruksi rigging backdrop kayu/styrofoam kokoh agar Anda dapat bersanding dengan tenang di hari bahagia.
           </p>
-          <ul className="space-y-2.5 text-xs text-stone-700">
-            <li className="flex items-center gap-2 font-medium">
-              <CheckCircle className="h-4.5 w-4.5 text-gold-dark flex-shrink-0" />
-              <span>Survey Lokasi & Gambar Layout 3D Gratis</span>
-            </li>
-            <li className="flex items-center gap-2 font-medium">
-              <CheckCircle className="h-4.5 w-4.5 text-gold-dark flex-shrink-0" />
-              <span>Bebas Konsultasi Kombinasi Warna Bunga & Lighting</span>
-            </li>
-            <li className="flex items-center gap-2 font-medium">
-              <CheckCircle className="h-4.5 w-4.5 text-gold-dark flex-shrink-0" />
-              <span>Peralatan Lengkap (Karpet Jalan, Meja VIP, Lampu Sorot)</span>
-            </li>
-          </ul>
         </div>
-        <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-stone-100 shadow-md">
-          <img
-            src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80"
-            alt="Survey Dekorasi"
-            className="w-full h-full object-cover"
-          />
+        <div className="space-y-3.5">
+          {[
+            'Bunga segar grade A disortir di pagi hari',
+            'Pemasangan instalasi pelaminan H-1',
+            'Desain 3D layout gratis sebelum eksekusi lapangan',
+            'Konstruksi backdrop dilapisi furing dan rapi tampak belakang'
+          ].map((text, idx) => (
+            <div key={idx} className="flex items-center space-x-2.5 text-xs text-stone-700">
+              <CheckCircle className="h-4.5 w-4.5 text-gold-dark flex-shrink-0" />
+              <span>{text}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Portfolios Gallery Grid */}
+      {/* Portfolios grid */}
       <div className="space-y-8">
         <div className="text-center max-w-lg mx-auto space-y-2">
-          <h2 className="text-2xl md:text-3xl font-serif font-bold text-charcoal">Galeri Hasil Dekorasi</h2>
-          <p className="text-xs text-stone-muted">Inspirasi layout pelaminan asli dari pengerjaan dekorasi kami.</p>
+          <h2 className="text-2xl md:text-3xl font-serif font-bold text-charcoal">Dokumentasi Venue Nyata</h2>
+          <p className="text-xs text-stone-muted">Foto real hasil pengerjaan dekorasi butik di berbagai gedung pertemuan dan kediaman klien.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -124,7 +120,7 @@ export default function DecorPage() {
           </p>
           <div className="flex gap-4">
             <a
-              href="https://wa.me/6281234567890?text=Halo%20Elika%20Wedding%2C%20saya%20tertarik%20untuk%20diskusi%20custom%20dekorasi%20pelaminan."
+              href={`https://wa.me/${settings.whatsappAdmin}?text=Halo%20Elika%20Wedding%2C%20saya%20tertarik%20untuk%20diskusi%20custom%20dekorasi%20pelaminan.`}
               target="_blank"
               rel="noreferrer"
               className="px-8 py-3 bg-gold hover:bg-gold-dark text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5"

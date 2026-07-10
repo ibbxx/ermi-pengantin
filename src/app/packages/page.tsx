@@ -1,10 +1,12 @@
 'use client';
 
 import { Check, X, Info } from 'lucide-react';
-import { MOCK_PACKAGES } from '@/data/mockData';
+import { usePackages } from '@/data/db';
 import PackageCard from '@/components/PackageCard';
 
 export default function PackagesPage() {
+  const [packages] = usePackages();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -43,7 +45,7 @@ export default function PackagesPage() {
 
       {/* Package Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-4">
-        {MOCK_PACKAGES.map((pkg) => (
+        {packages.map((pkg) => (
           <PackageCard key={pkg.id} pkg={pkg} />
         ))}
       </div>
