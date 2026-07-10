@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Clock, FileText, ArrowRight, MessageSquare, AlertTriangle } from 'lucide-react';
 import { Booking } from '@/types';
+import { db } from '@/data/db';
 
 function PendingPageContent() {
   const router = useRouter();
@@ -15,19 +16,11 @@ function PendingPageContent() {
 
   useEffect(() => {
     if (!bookingId) return;
-
-    const savedBookingsStr = localStorage.getItem('elika_bookings');
-    if (savedBookingsStr) {
-      try {
-        const bookingsList: Booking[] = JSON.parse(savedBookingsStr);
-        const foundBooking = bookingsList.find((b) => b.id === bookingId);
-        if (foundBooking) {
-          setBooking(foundBooking);
-        }
-      } catch (err) {
-        console.error(err);
+    db.getBookingById(bookingId).then((foundBooking) => {
+      if (foundBooking) {
+        setBooking(foundBooking);
       }
-    }
+    }).catch(console.error);
   }, [bookingId]);
 
   const handleWhatsAppNotify = () => {
