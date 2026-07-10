@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, Calendar, MapPin, User, Phone, Mail, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { useDresses, useMakeup, useDecor, usePackages, useSettings } from '@/data/db';
+import { useDresses, useMakeup, useDecor, usePackages, useSettings, db } from '@/data/db';
 import { Booking } from '@/types';
 
 // Wrap the actual form in a suspense boundary due to useSearchParams
@@ -261,26 +261,18 @@ function BookingFormContent() {
         createdAt: new Date().toISOString()
       };
 
-      // Load existing bookings from localstorage
-      const savedBookingsStr = localStorage.getItem('elika_bookings');
-      let bookingsList: Booking[] = [];
-      
-      if (savedBookingsStr) {
-        try {
-          bookingsList = JSON.parse(savedBookingsStr);
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      // Add new booking to lists
-      bookingsList.unshift(newBooking);
-      localStorage.setItem('elika_bookings', JSON.stringify(bookingsList));
-
-      setIsSubmitting(false);
-
-      // Redirect to checkout with bookingId
-      router.push(`/checkout?bookingId=${bookingId}`);
+      // Save new booking to database
+      db.saveBooking(newBooking)
+        .then(() => {
+          setIsSubmitting(false);
+          // Redirect to checkout with bookingId
+          router.push(`/checkout?bookingId=${bookingId}`);
+        })
+        .catch((err) => {
+          console.error('Failed to create booking:', err);
+          setIsSubmitting(false);
+          alert('Gagal membuat pesanan. Silakan coba lagi.');
+        });
     }, 1500);
   };
 

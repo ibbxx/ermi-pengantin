@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CreditCard, Landmark, QrCode, AlertCircle, Copy, Check, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Booking } from '@/types';
+import { db } from '@/data/db';
 import EmptyState from '@/components/ui/EmptyState';
 
 function CheckoutPageContent() {
@@ -15,22 +16,14 @@ function CheckoutPageContent() {
   const [copiedText, setCopiedText] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
 
-  // Retrieve booking from localStorage
+  // Retrieve booking from database
   useEffect(() => {
     if (!bookingId) return;
-
-    const savedBookingsStr = localStorage.getItem('elika_bookings');
-    if (savedBookingsStr) {
-      try {
-        const bookingsList: Booking[] = JSON.parse(savedBookingsStr);
-        const foundBooking = bookingsList.find((b) => b.id === bookingId);
-        if (foundBooking) {
-          setBooking(foundBooking);
-        }
-      } catch (err) {
-        console.error(err);
+    db.getBookingById(bookingId).then((foundBooking) => {
+      if (foundBooking) {
+        setBooking(foundBooking);
       }
-    }
+    }).catch(console.error);
   }, [bookingId]);
 
   const paymentSteps = useMemo(() => {
@@ -116,30 +109,22 @@ function CheckoutPageContent() {
     if (!booking) return;
     setIsPaying(true);
 
-    setTimeout(() => {
-      // Update local storage status
-      const savedBookingsStr = localStorage.getItem('elika_bookings');
-      if (savedBookingsStr) {
-        try {
-          const bookingsList: Booking[] = JSON.parse(savedBookingsStr);
-          const updatedList = bookingsList.map((b) => {
-            if (b.id === booking.id) {
-              return {
-                ...b,
-                paymentStatus: 'paid' as const,
-                bookingStatus: 'paid' as const // confirms booking
-              };
-            }
-            return b;
-          });
-          localStorage.setItem('elika_bookings', JSON.stringify(updatedList));
-        } catch (err) {
-          console.error(err);
-        }
-      }
-      setIsPaying(false);
-      router.push(`/payment/success?bookingId=${booking.id}`);
-    }, 1500);
+    const updatedBooking: Booking = {
+      ...booking,
+      paymentStatus: 'paid' as const,
+      bookingStatus: 'paid' as const // confirms booking
+    };
+
+    db.saveBooking(updatedBooking)
+      .then(() => {
+        setIsPaying(false);
+        router.push(`/payment/success?bookingId=${booking.id}`);
+      })
+      .catch((err) => {
+        console.error(err);
+        setIsPaying(false);
+        alert('Gagal memperbarui status pembayaran.');
+      });
   };
 
   // Simulate Payment Failed
@@ -147,30 +132,22 @@ function CheckoutPageContent() {
     if (!booking) return;
     setIsPaying(true);
 
-    setTimeout(() => {
-      // Update local storage status
-      const savedBookingsStr = localStorage.getItem('elika_bookings');
-      if (savedBookingsStr) {
-        try {
-          const bookingsList: Booking[] = JSON.parse(savedBookingsStr);
-          const updatedList = bookingsList.map((b) => {
-            if (b.id === booking.id) {
-              return {
-                ...b,
-                paymentStatus: 'failed' as const,
-                bookingStatus: 'cancelled' as const
-              };
-            }
-            return b;
-          });
-          localStorage.setItem('elika_bookings', JSON.stringify(updatedList));
-        } catch (err) {
-          console.error(err);
-        }
-      }
-      setIsPaying(false);
-      router.push(`/payment/failed?bookingId=${booking.id}`);
-    }, 1000);
+    const updatedBooking: Booking = {
+      ...booking,
+      paymentStatus: 'failed' as const,
+      bookingStatus: 'cancelled' as const
+    };
+
+    db.saveBooking(updatedBooking)
+      .then(() => {
+        setIsPaying(false);
+        router.push(`/payment/failed?bookingId=${booking.id}`);
+      })
+      .catch((err) => {
+        console.error(err);
+        setIsPaying(false);
+        alert('Gagal memperbarui status pembayaran.');
+      });
   };
 
   // Simulate Payment Pending
