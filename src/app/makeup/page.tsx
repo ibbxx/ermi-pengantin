@@ -1,11 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { Sparkles, Heart, ShieldAlert, Award } from 'lucide-react';
-import { MOCK_MAKEUP, MOCK_GALLERY } from '@/data/mockData';
+import { useMakeup, useGallery, useSettings } from '@/data/db';
 import MakeupPackageCard from '@/components/MakeupPackageCard';
 
 export default function MakeupPage() {
-  const makeupPortfolios = MOCK_GALLERY.filter((item) => item.category === 'makeup');
+  const [makeup] = useMakeup();
+  const [gallery] = useGallery();
+  const [settings] = useSettings();
+
+  const makeupPortfolios = gallery.filter((item) => item.category === 'makeup');
 
   const qualityPoints = [
     {
@@ -30,8 +35,7 @@ export default function MakeupPage() {
       
       {/* Header */}
       <div className="text-center max-w-xl mx-auto space-y-2">
-        <span className="text-xs uppercase tracking-widest text-gold-dark font-bold font-semibold">Bridal Makeup Artist (MUA)</span>
-        <h1 className="text-3xl md:text-5xl font-serif font-bold text-charcoal">Jasa Makeup Pengantin</h1>
+        <h1 className="text-3xl md:text-5xl font-serif font-bold text-charcoal">Jasa Rias Pengantin (MUA)</h1>
         <p className="text-xs text-stone-muted">
           Riasan wajah istimewa dengan konsep flawless, glowing, dan semi-bold yang disesuaikan untuk menonjolkan kecantikan alami Anda.
         </p>
@@ -41,7 +45,7 @@ export default function MakeupPage() {
       <div className="space-y-8">
         <h2 className="text-2xl font-serif font-bold text-charcoal text-center md:text-left">Pilihan Paket Rias Wajah</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {MOCK_MAKEUP.map((pkg) => (
+          {makeup.map((pkg) => (
             <MakeupPackageCard key={pkg.id} pkg={pkg} />
           ))}
         </div>
@@ -98,7 +102,7 @@ export default function MakeupPage() {
           </p>
           <div className="flex gap-4">
             <a
-              href="https://wa.me/6281234567890?text=Halo%20Elika%20Wedding%2C%20saya%20ingin%20konsultasi%20jadwal%20booking%20MUA."
+              href={`https://wa.me/${settings.whatsappAdmin}?text=Halo%20Elika%20Wedding%2C%20saya%20ingin%20konsultasi%20jadwal%20booking%20MUA.`}
               target="_blank"
               rel="noreferrer"
               className="px-8 py-3 bg-gold hover:bg-gold-dark text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300"

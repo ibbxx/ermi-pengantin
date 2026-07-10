@@ -13,11 +13,17 @@ import {
   ArrowRight,
   Heart
 } from 'lucide-react';
-import { MOCK_DRESSES, MOCK_PACKAGES, MOCK_TESTIMONIALS, MOCK_GALLERY } from '@/data/mockData';
+import { useDresses, usePackages, useGallery, useTestimonials, useSettings } from '@/data/db';
 import DressCard from '@/components/DressCard';
 import PackageCard from '@/components/PackageCard';
 
 export default function Home() {
+  const [dresses] = useDresses();
+  const [packages] = usePackages();
+  const [gallery] = useGallery();
+  const [testimonials] = useTestimonials();
+  const [settings] = useSettings();
+
   // FAQ toggle state
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -188,12 +194,12 @@ export default function Home() {
               href="/dresses"
               className="inline-flex items-center px-6 py-2.5 bg-gold/10 hover:bg-gold/20 text-gold-dark rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
             >
-              Lihat Semua Gaun ({MOCK_DRESSES.length})
+              Lihat Semua Gaun ({dresses.length})
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {MOCK_DRESSES.filter(d => d.isPopular).slice(0, 3).map((dress) => (
+            {dresses.filter(d => d.isPopular).slice(0, 3).map((dress) => (
               <DressCard key={dress.id} dress={dress} />
             ))}
           </div>
@@ -211,7 +217,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {MOCK_PACKAGES.map((pkg) => (
+          {packages.map((pkg) => (
             <PackageCard key={pkg.id} pkg={pkg} />
           ))}
         </div>
@@ -229,7 +235,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_GALLERY.slice(0, 6).map((item) => (
+            {gallery.slice(0, 6).map((item) => (
               <div key={item.id} className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer shadow-lg">
                 <img
                   src={item.image}
@@ -289,7 +295,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {MOCK_TESTIMONIALS.map((test) => (
+            {testimonials.map((test) => (
               <div key={test.id} className="bg-white p-8 rounded-3xl shadow-md border border-gold-light/10 flex flex-col justify-between space-y-6">
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: test.rating }).map((_, i) => (
@@ -366,7 +372,7 @@ export default function Home() {
                 Booking Sekarang
               </Link>
               <a
-                href="https://wa.me/6281234567890?text=Halo%20Elika%20Wedding%2C%20saya%20tertarik%20untuk%20konsultasi%20paket%20wedding."
+                href={`https://wa.me/${settings.whatsappAdmin}?text=Halo%20Elika%20Wedding%2C%20saya%20tertarik%20untuk%20konsultasi%20paket%20wedding.`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-8 py-3 border border-stone-500 hover:border-gold hover:text-gold text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300"

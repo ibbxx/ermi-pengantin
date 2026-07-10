@@ -161,3 +161,23 @@ export interface AdminUser {
   email: string;
   role: 'admin' | 'superadmin';
 }
+
+export interface SystemSettings {
+  shopName: string;
+  whatsappAdmin: string;
+  emailAdmin: string;
+  minDpPercent: number;
+  transportBase: number;
+  address: string;
+}
+
+
+export interface SystemSettings {
+  shopName: string;
+  whatsappAdmin: string;
+  emailAdmin: string;
+  minDpPercent: number;
+  transportBase: number;
+  address: string;
+}
+

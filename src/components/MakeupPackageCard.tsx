@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { MakeupPackage } from '@/types';
+import { useSettings } from '@/data/db';
 
 interface MakeupPackageCardProps {
   pkg: MakeupPackage;
 }
 
 export default function MakeupPackageCard({ pkg }: MakeupPackageCardProps) {
+  const [settings] = useSettings();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -19,7 +22,7 @@ export default function MakeupPackageCard({ pkg }: MakeupPackageCardProps) {
 
   const handleWhatsAppConsult = () => {
     const text = encodeURIComponent(`Halo Elika Wedding, saya tertarik dengan layanan "${pkg.name}" seharga ${formatPrice(pkg.price)}. Ingin tanya-tanya jadwal.`);
-    window.open(`https://wa.me/6281234567890?text=${text}`, '_blank');
+    window.open(`https://wa.me/${settings.whatsappAdmin}?text=${text}`, '_blank');
   };
 
   return (

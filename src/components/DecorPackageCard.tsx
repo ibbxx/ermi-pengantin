@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { Check, Map } from 'lucide-react';
 import { DecorPackage } from '@/types';
+import { useSettings } from '@/data/db';
 
 interface DecorPackageCardProps {
   pkg: DecorPackage;
 }
 
 export default function DecorPackageCard({ pkg }: DecorPackageCardProps) {
+  const [settings] = useSettings();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -19,7 +22,7 @@ export default function DecorPackageCard({ pkg }: DecorPackageCardProps) {
 
   const handleWhatsAppConsult = () => {
     const text = encodeURIComponent(`Halo Elika Wedding, saya ingin berkonsultasi mengenai Paket Dekorasi "${pkg.name}" (${pkg.theme}) seharga ${formatPrice(pkg.price)}.`);
-    window.open(`https://wa.me/6281234567890?text=${text}`, '_blank');
+    window.open(`https://wa.me/${settings.whatsappAdmin}?text=${text}`, '_blank');
   };
 
   return (

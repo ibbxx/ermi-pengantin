@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageCircle, X } from 'lucide-react';
+import { useSettings } from '@/data/db';
 
 export default function WhatsAppFloatingButton() {
   const [showTooltip, setShowTooltip] = useState(false);
   const pathname = usePathname();
+  const [settings] = useSettings();
 
   useEffect(() => {
     // Show tooltip after 5 seconds
@@ -22,7 +24,7 @@ export default function WhatsAppFloatingButton() {
   }
 
   const handleWhatsAppRedirect = () => {
-    const phoneNumber = '6281234567890';
+    const phoneNumber = settings.whatsappAdmin;
     const message = encodeURIComponent('Halo Elika Wedding, saya tertarik dengan layanan sewa gaun/makeup/dekorasi untuk pernikahan saya. Ingin konsultasi lebih lanjut.');
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
