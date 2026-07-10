@@ -159,9 +159,9 @@ export default function AdminDresses() {
         newImages.push(url);
       }
       setImagesList((prev) => [...prev, ...newImages]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gagal mengunggah gambar:', error);
-      alert('Gagal mengunggah gambar. Silakan coba lagi.');
+      alert(error instanceof Error ? error.message : 'Gagal mengunggah gambar. Silakan coba lagi.');
     } finally {
       setUploadingImage(false);
     }

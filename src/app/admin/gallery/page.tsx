@@ -54,9 +54,9 @@ export default function AdminGallery() {
     try {
       const url = await uploadImage(file, 'gallery');
       setImage(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gagal mengunggah gambar:', error);
-      alert('Gagal mengunggah gambar. Silakan coba lagi.');
+      alert(error instanceof Error ? error.message : 'Gagal mengunggah gambar. Silakan coba lagi.');
     } finally {
       setUploadingImage(false);
     }
