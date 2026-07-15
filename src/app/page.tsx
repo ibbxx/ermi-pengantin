@@ -108,10 +108,6 @@ export default function Home() {
                 ) : (
                   <ImagePlaceholder label="Foto hero belum diatur" />
                 )}
-                {/* Subtle overlay badge */}
-                <div className="absolute bottom-3 left-3 bg-background/90 px-2 py-0.5 rounded border text-[8px] font-bold uppercase tracking-widest text-foreground">
-                  Atelier
-                </div>
               </div>
             </div>
           </div>
