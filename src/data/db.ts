@@ -432,7 +432,7 @@ export const db = {
     }
     return mapSettingsFromDb(data);
   },
-  async saveSettings(settings: SystemSettings) {
+  async saveSettings(settings: SystemSettings): Promise<void> {
     const row = {
       id: 1,
       shop_name: settings.shopName,
@@ -446,6 +446,7 @@ export const db = {
     const { error } = await supabase.from('system_settings').upsert(row);
     if (error) {
       console.error('Failed to save settings:', error);
+      throw error;
     }
   }
 };
@@ -542,9 +543,9 @@ export function useSettings() {
   useEffect(() => {
     db.getSettings().then(setSettings);
   }, []);
-  const updateSettings = (newSettings: SystemSettings) => {
+  const updateSettings = async (newSettings: SystemSettings): Promise<void> => {
+    await db.saveSettings(newSettings);
     setSettings(newSettings);
-    db.saveSettings(newSettings);
   };
   return [settings, updateSettings] as const;
 }
