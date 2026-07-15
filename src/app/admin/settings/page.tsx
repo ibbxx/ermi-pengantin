@@ -17,6 +17,7 @@ export default function AdminSettings() {
   const [address, setAddress] = useState(settings.address);
   const [heroImage, setHeroImage] = useState(settings.heroImage || '');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Sync local fields when settings is loaded/changed
   useEffect(() => {
@@ -29,18 +30,30 @@ export default function AdminSettings() {
     setHeroImage(settings.heroImage || '');
   }, [settings]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSettings({
-      shopName,
-      whatsappAdmin,
-      emailAdmin,
-      minDpPercent,
-      transportBase,
-      address,
-      heroImage
-    });
-    alert('Pengaturan butik telah berhasil diperbarui secara lokal!');
+    setIsSaving(true);
+
+    try {
+      await setSettings({
+        shopName,
+        whatsappAdmin,
+        emailAdmin,
+        minDpPercent,
+        transportBase,
+        address,
+        heroImage
+      });
+      alert('Pengaturan butik berhasil disimpan ke Supabase.');
+    } catch (error: unknown) {
+      console.error('Failed to save settings:', error);
+      const message = error instanceof Error
+        ? error.message
+        : 'Gagal menyimpan pengaturan ke Supabase.';
+      alert(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -164,7 +177,7 @@ export default function AdminSettings() {
                       try {
                         const url = await uploadImage(file, 'settings');
                         setHeroImage(url);
-                      } catch (error: any) {
+                      } catch (error: unknown) {
                         console.error('Failed to upload image:', error);
                         alert(error instanceof Error ? error.message : 'Gagal mengunggah gambar.');
                       } finally {
@@ -204,10 +217,11 @@ export default function AdminSettings() {
         <div className="pt-2 flex justify-end">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-gold hover:bg-gold-dark text-white font-bold rounded-xl uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md cursor-pointer"
+            disabled={isSaving}
+            className="px-6 py-2.5 bg-gold hover:bg-gold-dark disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-md cursor-pointer"
           >
-            <Save className="h-4 w-4" />
-            <span>Simpan Perubahan</span>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
           </button>
         </div>
 

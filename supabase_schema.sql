@@ -211,6 +211,10 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
     hero_image TEXT
 );
 
+-- Keep existing installations aligned when the table predates hero images.
+ALTER TABLE public.system_settings
+    ADD COLUMN IF NOT EXISTS hero_image TEXT;
+
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public read access to system_settings" ON public.system_settings;
