@@ -72,107 +72,55 @@ export default function Home() {
   const featuredDresses = dresses.filter((dress) => dress.isPopular).slice(0, 3);
   return (
     <div className="pb-24">
-      {/* Mobile Hero (Editorial-Asymmetric) */}
-      <section className="block md:hidden border-b bg-secondary/15 overflow-hidden">
-        <div className="px-5 py-9 space-y-7 flex flex-col min-h-[calc(100svh-4rem)] justify-between">
-          {/* Header Typography */}
-          <div className="space-y-2 text-center">
-            <div className="flex items-center justify-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.25em] text-primary/80">
-              <span className="h-[1px] w-4 bg-primary/30" />
+      {/* Mobile Hero (Option A: Immersive Background & Glassmorphic Card) */}
+      <section className="relative block md:hidden w-full h-[calc(100svh-4rem)] overflow-hidden border-b">
+        {/* Background Image */}
+        {settings.heroImage ? (
+          <Image 
+            src={settings.heroImage} 
+            alt="Karya pernikahan Ermi Pengantin" 
+            fill 
+            priority
+            sizes="100vw" 
+            className="object-cover -z-20" 
+          />
+        ) : (
+          <div className="absolute inset-0 bg-muted -z-20" />
+        )}
+        
+        {/* Soft elegant gradient overlays for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/80 -z-10" />
+
+        {/* Top Watermark Branding */}
+        <div className="absolute top-7 inset-x-0 flex flex-col items-center justify-center text-center">
+          <span className="font-heading text-2xl italic text-white tracking-widest">Ermi</span>
+          <span className="text-[7px] font-extrabold uppercase tracking-[0.35em] text-white/70 mt-0.5">Atelier</span>
+        </div>
+
+        {/* Bottom Floating Glassmorphic Card */}
+        <div className="absolute bottom-7 left-5 right-5 p-6 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/15 text-white shadow-2xl space-y-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-[8px] font-extrabold uppercase tracking-[0.25em] text-white/95">
+              <span className="h-[1px] w-4 bg-white/45" />
               Busana · Rias · Dekorasi
-              <span className="h-[1px] w-4 bg-primary/30" />
             </div>
-            <h1 className="font-heading text-3xl leading-[1.15] tracking-tight text-foreground px-1">
+            <h1 className="font-heading text-2xl leading-tight tracking-tight text-white">
               Satu visi untuk hari pernikahan{' '}
-              <span className="font-serif italic text-primary block mt-1.5 font-normal">
+              <span className="font-serif italic text-amber-100/90 block mt-1 font-normal">
                 yang terasa milik Anda.
               </span>
             </h1>
           </div>
-
-          {/* Asymmetric Gallery Frame */}
-          <div className="relative w-full my-4 flex items-center justify-center">
-            <div className="relative w-[72%] aspect-[3/4]">
-              {/* Outer offset boundary line frame */}
-              <div className="absolute -inset-3.5 border border-primary/20 rounded-3xl translate-x-3 translate-y-3 -z-10" />
-              
-              {/* Image Container with shadow and rounded styling */}
-              <div className="w-full h-full rounded-3xl overflow-hidden shadow-lg border border-border/80 bg-muted relative">
-                {settings.heroImage ? (
-                  <Image 
-                    src={settings.heroImage} 
-                    alt="Karya pernikahan Ermi Pengantin" 
-                    fill 
-                    priority
-                    sizes="72vw" 
-                    className="object-cover" 
-                  />
-                ) : (
-                  <ImagePlaceholder label="Foto hero belum diatur" />
-                )}
-                {/* Subtle overlay badge */}
-                <div className="absolute bottom-3.5 left-3.5 bg-background/90 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-border/40 text-[9px] font-bold text-foreground/90 uppercase tracking-widest">
-                  Atelier
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Paragraph & CTAs */}
-          <div className="space-y-5 text-center">
-            <p className="text-[11px] leading-relaxed text-muted-foreground max-w-xs mx-auto">
-              Ceritakan rencana Anda. Kami menyelaraskan seluruh detail agar hari pernikahan terasa utuh, personal, dan tetap tenang.
-            </p>
-            <div className="flex gap-2 max-w-sm mx-auto">
-              <Button asChild className="flex-grow h-10 text-[10px] font-extrabold uppercase tracking-wider rounded-full shadow-md">
-                <Link href="/booking">Mulai Konsultasi</Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-grow h-10 text-[10px] font-extrabold uppercase tracking-wider rounded-full border-primary/25 hover:bg-primary/5 text-primary">
-                <Link href="/dresses">Koleksi Gaun</Link>
-              </Button>
-            </div>
-          </div>
-
-          {/* Horizontal Service Quick-Preview */}
-          <div className="space-y-3.5 border-t pt-5 border-border/40">
-            <div className="flex justify-between items-center px-1">
-              <span className="text-[9px] font-extrabold uppercase tracking-widest text-muted-foreground">Jelajahi Jasa Utama:</span>
-              <span className="text-[8px] font-semibold text-muted-foreground/60">Geser &gt;</span>
-            </div>
-            <div className="flex overflow-x-auto gap-4 py-1 pb-3 scrollbar-none snap-x snap-mandatory">
-              {services.map((service) => (
-                <Link
-                  key={service.href}
-                  href={service.href}
-                  className="flex-shrink-0 w-[46vw] snap-start group"
-                >
-                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border bg-muted shadow-xs mb-2">
-                    {service.image ? (
-                      <Image 
-                        src={service.image} 
-                        alt={service.title} 
-                        fill 
-                        sizes="30vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105" 
-                      />
-                    ) : (
-                      <ImagePlaceholder label="" />
-                    )}
-                    {/* Shadow overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    
-                    {/* Caption inside the card */}
-                    <span className="absolute bottom-2.5 left-3 text-white font-serif text-[11px] font-bold tracking-wide">
-                      {service.title}
-                    </span>
-                    {/* Number badge */}
-                    <span className="absolute top-2.5 right-3 text-white/90 bg-black/35 backdrop-blur-xs px-1.5 py-0.5 rounded font-mono text-[8px] tracking-widest font-bold">
-                      {service.number}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+          <p className="text-[10px] leading-relaxed text-white/80 max-w-xs">
+            Kami menyelaraskan seluruh detail agar hari pernikahan terasa utuh, personal, dan tetap tenang.
+          </p>
+          <div className="flex gap-2.5 pt-1">
+            <Button asChild size="sm" className="flex-grow h-9.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white text-black hover:bg-white/90">
+              <Link href="/booking">Mulai Konsultasi</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="flex-grow h-9.5 rounded-full text-[9px] font-bold uppercase tracking-wider border-white/20 hover:bg-white/10 text-white">
+              <Link href="/dresses">Koleksi Gaun</Link>
+            </Button>
           </div>
         </div>
       </section>
