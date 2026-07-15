@@ -12,9 +12,6 @@ const EMPTY_TESTIMONIALS: Testimonial[] = [];
 const EMPTY_GALLERY: Gallery[] = [];
 const EMPTY_BOOKINGS: Booking[] = [];
 
-// Helper to determine if we are in the browser environment
-const isBrowser = () => typeof window !== 'undefined';
-
 // Default settings
 const DEFAULT_SETTINGS: SystemSettings = {
   shopName: 'Elika Wedding Organizer & Atelier',
@@ -43,7 +40,6 @@ function mapDressFromDb(row: any): Dress {
     description: row.description || '',
     material: row.material || '',
     rentalDurationDays: row.rental_duration_days || 3,
-    availableDates: row.available_dates || [],
     rating: Number(row.rating || 5),
     reviewCount: row.review_count || 0,
     isPopular: !!row.is_popular,
@@ -175,227 +171,11 @@ function mapSettingsFromDb(row: any): SystemSettings {
 }
 
 // ==========================================
-// LOCALSTORAGE TO SUPABASE MIGRATION
-// ==========================================
-async function syncLocalToSupabase() {
-  if (!isBrowser()) return;
-  const migratedKey = 'elika_db_migrated_v1';
-  if (localStorage.getItem(migratedKey)) return;
-
-  try {
-    console.log('[Migration] Starting localStorage to Supabase migration...');
-
-    // 1. Dresses
-    const localDresses = localStorage.getItem('elika_dresses');
-    if (localDresses) {
-      try {
-        const list = JSON.parse(localDresses) as Dress[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('dresses').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(d => ({
-              id: d.id,
-              slug: d.slug,
-              name: d.name,
-              category: d.category,
-              price: d.price,
-              deposit: d.deposit,
-              sizes: d.sizes,
-              colors: d.colors,
-              images: d.images,
-              description: d.description,
-              material: d.material,
-              rental_duration_days: d.rentalDurationDays,
-              available_dates: d.availableDates,
-              rating: d.rating,
-              review_count: d.reviewCount,
-              is_popular: d.isPopular,
-              status: d.status
-            }));
-            await supabase.from('dresses').upsert(rows);
-            console.log('[Migration] Migrated dresses:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 2. Makeup
-    const localMakeup = localStorage.getItem('elika_makeup');
-    if (localMakeup) {
-      try {
-        const list = JSON.parse(localMakeup) as MakeupPackage[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('makeup_packages').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(m => ({
-              id: m.id,
-              name: m.name,
-              price: m.price,
-              description: m.description,
-              features: m.features,
-              images: m.images
-            }));
-            await supabase.from('makeup_packages').upsert(rows);
-            console.log('[Migration] Migrated makeup packages:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 3. Decor
-    const localDecor = localStorage.getItem('elika_decor');
-    if (localDecor) {
-      try {
-        const list = JSON.parse(localDecor) as DecorPackage[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('decor_packages').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(d => ({
-              id: d.id,
-              name: d.name,
-              theme: d.theme,
-              price: d.price,
-              description: d.description,
-              venue_size: d.venueSize,
-              features: d.features,
-              images: d.images
-            }));
-            await supabase.from('decor_packages').upsert(rows);
-            console.log('[Migration] Migrated decor packages:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 4. Packages
-    const localPackages = localStorage.getItem('elika_packages');
-    if (localPackages) {
-      try {
-        const list = JSON.parse(localPackages) as WeddingPackage[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('wedding_packages').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(w => ({
-              id: w.id,
-              name: w.name,
-              price: w.price,
-              dresses_included: w.dressesIncluded,
-              makeup_included: w.makeupIncluded,
-              decor_included: w.decorIncluded,
-              features: w.features,
-              deposit_required: w.depositRequired,
-              is_popular: w.isPopular
-            }));
-            await supabase.from('wedding_packages').upsert(rows);
-            console.log('[Migration] Migrated wedding packages:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 5. Gallery
-    const localGallery = localStorage.getItem('elika_gallery');
-    if (localGallery) {
-      try {
-        const list = JSON.parse(localGallery) as Gallery[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('gallery').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(g => ({
-              id: g.id,
-              title: g.title,
-              category: g.category,
-              image: g.image,
-              description: g.description
-            }));
-            await supabase.from('gallery').upsert(rows);
-            console.log('[Migration] Migrated gallery items:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 6. Testimonials
-    const localTestimonials = localStorage.getItem('elika_testimonials');
-    if (localTestimonials) {
-      try {
-        const list = JSON.parse(localTestimonials) as Testimonial[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('testimonials').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(t => ({
-              id: t.id,
-              name: t.name,
-              role: t.role,
-              rating: t.rating,
-              comment: t.comment,
-              avatar: t.avatar
-            }));
-            await supabase.from('testimonials').upsert(rows);
-            console.log('[Migration] Migrated testimonials:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 7. Bookings
-    const localBookings = localStorage.getItem('elika_bookings');
-    if (localBookings) {
-      try {
-        const list = JSON.parse(localBookings) as Booking[];
-        if (list.length > 0) {
-          const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true });
-          if (count === 0) {
-            const rows = list.map(mapBookingToDb);
-            await supabase.from('bookings').upsert(rows);
-            console.log('[Migration] Migrated bookings:', list.length);
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // 8. Settings
-    const localSettings = localStorage.getItem('elika_settings');
-    if (localSettings) {
-      try {
-        const s = JSON.parse(localSettings) as SystemSettings;
-        const row = {
-          id: 1,
-          shop_name: s.shopName,
-          whatsapp_admin: s.whatsappAdmin,
-          email_admin: s.emailAdmin,
-          min_dp_percent: s.minDpPercent,
-          transport_base: s.transportBase,
-          address: s.address,
-          hero_image: s.heroImage
-        };
-        await supabase.from('system_settings').upsert(row);
-        console.log('[Migration] Migrated settings.');
-      } catch (e) { console.error(e); }
-    }
-
-    localStorage.setItem(migratedKey, 'true');
-    console.log('[Migration] localStorage data successfully migrated to Supabase!');
-  } catch (error) {
-    console.error('[Migration] Failed to migrate local data:', error);
-  }
-}
-
-let migrationPromise: Promise<void> | null = null;
-function startMigration() {
-  if (!migrationPromise && isBrowser()) {
-    migrationPromise = syncLocalToSupabase();
-  }
-  return migrationPromise || Promise.resolve();
-}
-
-// ==========================================
 // REPOSITORY PATTERN CONNECTED TO SUPABASE
 // ==========================================
 export const db = {
   // --- Dresses ---
   async getDresses(): Promise<Dress[]> {
-    await startMigration();
     const { data, error } = await supabase.from('dresses').select('*').order('name');
     if (error) {
       console.error('Failed to get dresses:', error);
@@ -404,7 +184,6 @@ export const db = {
     return (data || []).map(mapDressFromDb);
   },
   async saveDresses(dresses: Dress[]) {
-    await startMigration();
     const { data: current } = await supabase.from('dresses').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = dresses.map(d => d.id);
@@ -430,7 +209,6 @@ export const db = {
         description: d.description,
         material: d.material,
         rental_duration_days: d.rentalDurationDays,
-        available_dates: d.availableDates,
         rating: d.rating,
         review_count: d.reviewCount,
         is_popular: d.isPopular,
@@ -442,7 +220,6 @@ export const db = {
 
   // --- Makeup ---
   async getMakeup(): Promise<MakeupPackage[]> {
-    await startMigration();
     const { data, error } = await supabase.from('makeup_packages').select('*').order('name');
     if (error) {
       console.error('Failed to get makeup:', error);
@@ -451,7 +228,6 @@ export const db = {
     return (data || []).map(mapMakeupFromDb);
   },
   async saveMakeup(packages: MakeupPackage[]) {
-    await startMigration();
     const { data: current } = await supabase.from('makeup_packages').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = packages.map(p => p.id);
@@ -476,7 +252,6 @@ export const db = {
 
   // --- Decor ---
   async getDecor(): Promise<DecorPackage[]> {
-    await startMigration();
     const { data, error } = await supabase.from('decor_packages').select('*').order('name');
     if (error) {
       console.error('Failed to get decor:', error);
@@ -485,7 +260,6 @@ export const db = {
     return (data || []).map(mapDecorFromDb);
   },
   async saveDecor(decorations: DecorPackage[]) {
-    await startMigration();
     const { data: current } = await supabase.from('decor_packages').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = decorations.map(d => d.id);
@@ -512,7 +286,6 @@ export const db = {
 
   // --- Packages ---
   async getPackages(): Promise<WeddingPackage[]> {
-    await startMigration();
     const { data, error } = await supabase.from('wedding_packages').select('*').order('name');
     if (error) {
       console.error('Failed to get packages:', error);
@@ -521,7 +294,6 @@ export const db = {
     return (data || []).map(mapPackageFromDb);
   },
   async savePackages(packages: WeddingPackage[]) {
-    await startMigration();
     const { data: current } = await supabase.from('wedding_packages').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = packages.map(p => p.id);
@@ -549,7 +321,6 @@ export const db = {
 
   // --- Gallery ---
   async getGallery(): Promise<Gallery[]> {
-    await startMigration();
     const { data, error } = await supabase.from('gallery').select('*');
     if (error) {
       console.error('Failed to get gallery:', error);
@@ -558,7 +329,6 @@ export const db = {
     return (data || []).map(mapGalleryFromDb);
   },
   async saveGallery(gallery: Gallery[]) {
-    await startMigration();
     const { data: current } = await supabase.from('gallery').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = gallery.map(g => g.id);
@@ -582,7 +352,6 @@ export const db = {
 
   // --- Testimonials ---
   async getTestimonials(): Promise<Testimonial[]> {
-    await startMigration();
     const { data, error } = await supabase.from('testimonials').select('*');
     if (error) {
       console.error('Failed to get testimonials:', error);
@@ -591,7 +360,6 @@ export const db = {
     return (data || []).map(mapTestimonialFromDb);
   },
   async saveTestimonials(testimonials: Testimonial[]) {
-    await startMigration();
     const { data: current } = await supabase.from('testimonials').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = testimonials.map(t => t.id);
@@ -616,7 +384,6 @@ export const db = {
 
   // --- Bookings ---
   async getBookings(): Promise<Booking[]> {
-    await startMigration();
     const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
     if (error) {
       console.error('Failed to get bookings:', error);
@@ -625,7 +392,6 @@ export const db = {
     return (data || []).map(mapBookingFromDb);
   },
   async saveBookings(bookings: Booking[]) {
-    await startMigration();
     const { data: current } = await supabase.from('bookings').select('id');
     const dbIds = (current || []).map(r => r.id);
     const newIds = bookings.map(b => b.id);
@@ -641,7 +407,6 @@ export const db = {
     }
   },
   async getBookingById(id: string): Promise<Booking | null> {
-    await startMigration();
     const { data, error } = await supabase.from('bookings').select('*').eq('id', id).maybeSingle();
     if (error || !data) {
       if (error) console.error('Failed to get booking by ID:', error);
@@ -650,7 +415,6 @@ export const db = {
     return mapBookingFromDb(data);
   },
   async saveBooking(booking: Booking): Promise<void> {
-    await startMigration();
     const row = mapBookingToDb(booking);
     const { error } = await supabase.from('bookings').upsert(row);
     if (error) {
@@ -661,7 +425,6 @@ export const db = {
 
   // --- Settings ---
   async getSettings(): Promise<SystemSettings> {
-    await startMigration();
     const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).maybeSingle();
     if (error || !data) {
       if (error) console.error('Failed to get settings:', error);
@@ -670,7 +433,6 @@ export const db = {
     return mapSettingsFromDb(data);
   },
   async saveSettings(settings: SystemSettings) {
-    await startMigration();
     const row = {
       id: 1,
       shop_name: settings.shopName,

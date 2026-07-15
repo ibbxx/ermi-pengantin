@@ -35,8 +35,8 @@ export default function DressDetail({ params }: PageProps) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <EmptyState
-          title="Gaun Tidak Ditemukan"
-          description="Maaf, gaun pengantin yang Anda cari tidak tersedia dalam koleksi kami saat ini."
+          title="Busana Tidak Ditemukan"
+          description="Maaf, busana yang Anda cari tidak tersedia dalam koleksi kami saat ini."
           actionText="Kembali ke Katalog"
           onAction={() => router.push('/dresses')}
         />
@@ -58,7 +58,7 @@ export default function DressDetail({ params }: PageProps) {
   };
 
   const handleWhatsAppConsult = () => {
-    const text = encodeURIComponent(`Halo Elika Wedding, saya tertarik konsultasi gaun "${dress.name}".`);
+    const text = encodeURIComponent(`Halo Elika Wedding, saya tertarik konsultasi busana "${dress.name}".`);
     window.open(`https://wa.me/${settings.whatsappAdmin}?text=${text}`, '_blank');
   };
 
@@ -82,7 +82,7 @@ export default function DressDetail({ params }: PageProps) {
           href="/dresses"
           className="inline-flex items-center text-xs font-bold text-stone-600 hover:text-gold-dark gap-1"
         >
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Katalog Gaun
+          <ArrowLeft className="h-4 w-4" /> Kembali ke Katalog Busana
         </Link>
       </div>
 
@@ -99,7 +99,7 @@ export default function DressDetail({ params }: PageProps) {
                 className="w-full h-full object-cover object-center"
               />
             ) : (
-              <ImagePlaceholder label="Foto gaun kosong" />
+              <ImagePlaceholder label="Foto busana kosong" />
             )}
           </div>
           
@@ -142,7 +142,7 @@ export default function DressDetail({ params }: PageProps) {
           </div>
 
           <div className="prose prose-sm text-stone-600 leading-relaxed space-y-4">
-            <h3 className="font-serif font-bold text-base text-charcoal">Deskripsi Gaun</h3>
+            <h3 className="font-serif font-bold text-base text-charcoal">Deskripsi Busana</h3>
             <p className="text-xs">{dress.description}</p>
           </div>
 
@@ -176,7 +176,7 @@ export default function DressDetail({ params }: PageProps) {
               </li>
               <li className="flex items-start gap-1.5">
                 <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                <span>Deposit Jaminan dikembalikan 100% setelah pengecekan gaun.</span>
+                <span>Deposit Jaminan dikembalikan 100% setelah pengecekan busana.</span>
               </li>
             </ul>
           </div>
@@ -259,7 +259,7 @@ export default function DressDetail({ params }: PageProps) {
                 onClick={handleBooking}
                 className="w-full py-3 bg-gold hover:bg-gold-dark text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
               >
-                Booking Gaun
+                Booking Busana
               </button>
               <button
                 onClick={handleWhatsAppConsult}
@@ -278,7 +278,7 @@ export default function DressDetail({ params }: PageProps) {
       {/* Similar Dresses Section */}
       {similarDresses.length > 0 && (
         <div className="border-t border-gold-light/20 pt-12 space-y-8">
-          <h2 className="text-2xl font-serif font-bold text-charcoal">Rekomendasi Gaun Serupa</h2>
+          <h2 className="text-2xl font-serif font-bold text-charcoal">Rekomendasi Busana Serupa</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {similarDresses.map((item) => (
               <DressCard key={item.id} dress={item} />

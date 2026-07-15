@@ -17,12 +17,14 @@ CREATE TABLE IF NOT EXISTS public.dresses (
     description TEXT,
     material TEXT,
     rental_duration_days INTEGER DEFAULT 3,
-    available_dates TEXT[] NOT NULL DEFAULT '{}',
     rating NUMERIC(3, 2) DEFAULT 5.0,
     review_count INTEGER DEFAULT 0,
     is_popular BOOLEAN DEFAULT false,
     status TEXT DEFAULT 'available'
 );
+
+-- Keep existing installations aligned with the current application model.
+ALTER TABLE public.dresses DROP COLUMN IF EXISTS available_dates;
 
 -- Enable RLS for dresses
 ALTER TABLE public.dresses ENABLE ROW LEVEL SECURITY;

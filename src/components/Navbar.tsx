@@ -24,7 +24,7 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Beranda', href: '/' },
-    { name: 'Gaun Pengantin', href: '/dresses' },
+    { name: 'Sewa Baju', href: '/dresses' },
     { name: 'Jasa Makeup', href: '/makeup' },
     { name: 'Dekorasi', href: '/decor' },
     { name: 'Paket Wedding', href: '/packages' },

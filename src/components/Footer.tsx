@@ -58,7 +58,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-stone-300">
               <li>
                 <Link href="/dresses" className="hover:text-gold transition-colors">
-                  Sewa Baju Pengantin
+                  Sewa Baju & Busana
                 </Link>
               </li>
               <li>
