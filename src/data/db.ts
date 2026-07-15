@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Dress, MakeupPackage, DecorPackage, WeddingPackage, Testimonial, Gallery, Booking, SystemSettings } from '@/types';
+import { useEffect, useState } from 'react';
+import { Dress, MakeupPackage, DecorPackage, WeddingPackage, Testimonial, Gallery, SystemSettings } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 const EMPTY_DRESSES: Dress[] = [];
@@ -10,7 +10,6 @@ const EMPTY_DECOR: DecorPackage[] = [];
 const EMPTY_PACKAGES: WeddingPackage[] = [];
 const EMPTY_TESTIMONIALS: Testimonial[] = [];
 const EMPTY_GALLERY: Gallery[] = [];
-const EMPTY_BOOKINGS: Booking[] = [];
 
 // Default settings
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -113,63 +112,6 @@ function mapTestimonialFromDb(row: any): Testimonial {
     comment: row.comment,
     avatar: row.avatar || ''
   };
-}
-
-function mapBookingFromDb(row: any): Booking {
-  return {
-    id: row.id,
-    invoiceNumber: row.invoice_number,
-    customerId: row.customer_id,
-    customerName: row.customer_name,
-    customerWhatsApp: row.customer_whatsapp,
-    customerEmail: row.customer_email,
-    customerAddress: row.customer_address,
-    eventDate: row.event_date,
-    eventLocation: row.event_location,
-    eventType: row.event_type as any,
-    servicesSelected: row.services_selected || {},
-    notes: row.notes || '',
-    subtotal: row.subtotal,
-    additionalFees: row.additional_fees,
-    depositRequired: row.deposit_required,
-    totalAmount: row.total_amount,
-    paymentType: row.payment_type as any,
-    paymentMethod: row.payment_method,
-    paymentStatus: row.payment_status as any,
-    bookingStatus: row.booking_status as any,
-    paymentProof: row.payment_proof || undefined,
-    createdAt: row.created_at
-  };
-}
-
-function mapBookingToDb(b: Booking): any {
-  const row: any = {
-    id: b.id,
-    invoice_number: b.invoiceNumber,
-    customer_id: b.customerId,
-    customer_name: b.customerName,
-    customer_whatsapp: b.customerWhatsApp,
-    customer_email: b.customerEmail,
-    customer_address: b.customerAddress,
-    event_date: b.eventDate,
-    event_location: b.eventLocation,
-    event_type: b.eventType,
-    services_selected: b.servicesSelected,
-    notes: b.notes,
-    subtotal: b.subtotal,
-    additional_fees: b.additionalFees,
-    deposit_required: b.depositRequired,
-    total_amount: b.totalAmount,
-    payment_type: b.paymentType,
-    payment_method: b.paymentMethod,
-    payment_status: b.paymentStatus,
-    booking_status: b.bookingStatus,
-    created_at: b.createdAt
-  };
-  if (b.paymentProof !== undefined) {
-    row.payment_proof = b.paymentProof;
-  }
-  return row;
 }
 
 function mapSettingsFromDb(row: any): SystemSettings {
@@ -408,69 +350,6 @@ export const db = {
     }
   },
 
-  // --- Bookings ---
-  async getBookings(): Promise<Booking[]> {
-    const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
-    if (error) {
-      console.error('Failed to get bookings:', error);
-      throw error;
-    }
-    return (data || []).map(mapBookingFromDb);
-  },
-  async saveBookings(bookings: Booking[]) {
-    const { data: current } = await supabase.from('bookings').select('id');
-    const dbIds = (current || []).map(r => r.id);
-    const newIds = bookings.map(b => b.id);
-    
-    const toDelete = dbIds.filter(id => !newIds.includes(id));
-    if (toDelete.length > 0) {
-      await supabase.from('bookings').delete().in('id', toDelete);
-    }
-    
-    if (bookings.length > 0) {
-      const rows = bookings.map(mapBookingToDb);
-      await supabase.from('bookings').upsert(rows);
-    }
-  },
-  async getBookingById(id: string): Promise<Booking | null> {
-    const { data, error } = await supabase.from('bookings').select('*').eq('id', id).maybeSingle();
-    if (error || !data) {
-      if (error) console.error('Failed to get booking by ID:', error);
-      return null;
-    }
-    return mapBookingFromDb(data);
-  },
-  async saveBooking(booking: Booking): Promise<void> {
-    const row = mapBookingToDb(booking);
-    const { error } = await supabase.from('bookings').upsert(row);
-    if (error) {
-      console.error('Failed to save single booking:', error);
-      throw error;
-    }
-  },
-  async updateBooking(booking: Booking): Promise<Booking> {
-    const row = mapBookingToDb(booking);
-    row.payment_proof = booking.paymentProof ?? null;
-    const { data, error } = await supabase
-      .from('bookings')
-      .update(row)
-      .eq('id', booking.id)
-      .select('*')
-      .single();
-    if (error) {
-      console.error('Failed to update booking:', error);
-      throw error;
-    }
-    return mapBookingFromDb(data);
-  },
-  async deleteBooking(id: string): Promise<void> {
-    const { error } = await supabase.from('bookings').delete().eq('id', id);
-    if (error) {
-      console.error('Failed to delete booking:', error);
-      throw error;
-    }
-  },
-
   // --- Settings ---
   async getSettings(): Promise<SystemSettings> {
     const { data, error } = await supabase.from('system_settings').select('*').eq('id', 1).maybeSingle();
@@ -581,88 +460,6 @@ export function useTestimonials() {
     db.saveTestimonials(newTestimonials);
   };
   return [testimonials, updateTestimonials] as const;
-}
-
-export function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>(EMPTY_BOOKINGS);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      setBookings(await db.getBookings());
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Gagal memuat data booking.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    db.getBookings()
-      .then((loaded) => {
-        if (active) setBookings(loaded);
-      })
-      .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Gagal memuat data booking.');
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
-    return () => { active = false; };
-  }, []);
-
-  const updateBookings = (newBookings: Booking[]) => {
-    setBookings(newBookings);
-    void db.saveBookings(newBookings);
-  };
-
-  const updateBooking = useCallback(async (booking: Booking) => {
-    setError(null);
-    try {
-      const saved = await db.updateBooking(booking);
-      setBookings((current) => current.map((item) => item.id === saved.id ? saved : item));
-      return saved;
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Gagal memperbarui booking.';
-      setError(message);
-      throw cause;
-    }
-  }, []);
-
-  const cancelBooking = useCallback(async (id: string) => {
-    const current = bookings.find((item) => item.id === id);
-    if (!current) throw new Error('Booking tidak ditemukan.');
-    return updateBooking({ ...current, bookingStatus: 'cancelled' });
-  }, [bookings, updateBooking]);
-
-  const removeBooking = useCallback(async (id: string) => {
-    setError(null);
-    try {
-      await db.deleteBooking(id);
-      setBookings((current) => current.filter((item) => item.id !== id));
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Gagal menghapus booking.';
-      setError(message);
-      throw cause;
-    }
-  }, []);
-
-  return [bookings, updateBookings, {
-    updateBooking,
-    cancelBooking,
-    deleteBooking: removeBooking,
-    refresh,
-    isLoading,
-    error,
-  }] as const;
-}
-
-export async function deleteBooking(id: string): Promise<void> {
-  await db.deleteBooking(id);
 }
 
 export function useSettings() {

@@ -1,120 +1,28 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Search, Mail, Phone, MapPin, Clipboard } from 'lucide-react';
-import { Booking } from '@/types';
-import { useBookings } from '@/data/db';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Mail, MapPin, Phone, Search } from 'lucide-react';
+import { adminFetch, type AdminBooking } from '@/lib/admin-booking-api';
 
-export default function AdminCustomers() {
-  const [bookings] = useBookings();
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Compute unique customers from bookings
+export default function AdminCustomersPage() {
+  const [bookings, setBookings] = useState<AdminBooking[]>([]);
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    try { setBookings((await adminFetch<{ bookings: AdminBooking[] }>('/api/admin/bookings')).bookings); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Data pelanggan gagal dimuat.'); }
+  }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronize authenticated admin data after mount.
+  useEffect(() => { void load(); }, [load]);
   const customers = useMemo(() => {
-    const custMap: Record<string, {
-      name: string;
-      whatsapp: string;
-      email: string;
-      address: string;
-      bookingsCount: number;
-    }> = {};
-
-    bookings.forEach((b) => {
-      // Use whatsapp or email as key if customerId is default
-      const key = b.customerWhatsApp || b.customerEmail;
-      if (!custMap[key]) {
-        custMap[key] = {
-          name: b.customerName,
-          whatsapp: b.customerWhatsApp,
-          email: b.customerEmail,
-          address: b.customerAddress,
-          bookingsCount: 0
-        };
-      }
-      custMap[key].bookingsCount++;
+    const grouped = new Map<string, { name: string; whatsapp: string; email: string; address: string; count: number }>();
+    bookings.forEach((booking) => {
+      const key = booking.customer_whatsapp;
+      const current = grouped.get(key);
+      grouped.set(key, current ? { ...current, count: current.count + 1 } : { name: booking.customer_name, whatsapp: booking.customer_whatsapp, email: booking.customer_email, address: booking.customer_address, count: 1 });
     });
-
-    return Object.values(custMap);
-  }, [bookings]);
-
-  const filteredCustomers = useMemo(() => {
-    return customers.filter((c) => {
-      return c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.whatsapp.includes(searchQuery);
-    });
-  }, [customers, searchQuery]);
-
-  return (
-    <div className="space-y-6 text-xs">
-      
-      {/* Header controls */}
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
-        <div>
-          <h2 className="font-serif font-bold text-base text-charcoal">Database Kontak Pelanggan (Klien)</h2>
-          <p className="text-[10px] text-stone-400">Daftar kontak pengantin, email, alamat fitting, dan jumlah riwayat booking mereka.</p>
-        </div>
-        
-        {/* Search */}
-        <div className="relative w-64">
-          <input
-            type="text"
-            placeholder="Cari nama/kontak..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-stone-50 border border-stone-200 focus:border-gold rounded-xl py-1.5 px-3 pl-8 text-xs focus:outline-none"
-          />
-          <Search className="h-4 w-4 text-stone-400 absolute left-2.5 top-2.5" />
-        </div>
-      </div>
-
-      {/* Grid of customer contacts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filteredCustomers.map((cust, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 pb-3 border-b border-stone-150">
-              <div className="w-10 h-10 rounded-full bg-champagne text-gold-dark font-bold text-sm flex items-center justify-center">
-                {cust.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <h3 className="font-serif font-bold text-sm text-charcoal leading-none">{cust.name}</h3>
-                <span className="text-[9px] text-stone-400 mt-1 block font-semibold">{cust.bookingsCount}x Melakukan Booking</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-stone-600">
-              <p className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                <span>{cust.whatsapp}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gold flex-shrink-0" />
-                <span>{cust.email}</span>
-              </p>
-              <p className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-stone-400 flex-shrink-0 mt-0.5" />
-                <span className="leading-relaxed">{cust.address}</span>
-              </p>
-            </div>
-
-            <div className="pt-2 border-t border-stone-100 flex justify-end">
-              <a
-                href={`https://wa.me/${cust.whatsapp}`}
-                target="_blank"
-                rel="noreferrer"
-                className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold flex items-center gap-1 shadow-sm"
-              >
-                <Clipboard className="h-3.5 w-3.5" /> Chat WhatsApp
-              </a>
-            </div>
-          </div>
-        ))}
-
-        {filteredCustomers.length === 0 && (
-          <div className="col-span-3 py-12 text-center text-stone-400 italic">Tidak ada data pelanggan cocok.</div>
-        )}
-      </div>
-
-    </div>
-  );
+    const query = search.toLowerCase();
+    return [...grouped.values()].filter((item) => [item.name, item.whatsapp, item.email].some((value) => value.toLowerCase().includes(query)));
+  }, [bookings, search]);
+  return <div className="space-y-6"><header className="flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="font-serif text-xl font-bold">Data Pelanggan</h1><p className="text-xs text-stone-500">Kontak pelanggan dari API admin, bukan akses tabel publik.</p></div><label className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-stone-400" /><input className="rounded-xl border border-stone-200 py-2 pl-9 pr-3 text-xs outline-none focus:border-gold" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari pelanggan…" /></label></header>{error ? <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}<section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{customers.map((customer) => <article key={customer.whatsapp} className="rounded-2xl border border-stone-200 bg-white p-5"><div className="flex items-center justify-between"><h2 className="font-serif font-bold">{customer.name}</h2><span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-bold">{customer.count} booking</span></div><div className="mt-4 space-y-2 text-xs text-stone-600"><p className="flex gap-2"><Phone className="h-4 w-4 text-emerald-600" />{customer.whatsapp}</p><p className="flex gap-2"><Mail className="h-4 w-4 text-gold-deep" />{customer.email || '-'}</p><p className="flex gap-2"><MapPin className="h-4 w-4 text-stone-400" />{customer.address || '-'}</p></div><a className="mt-4 block rounded-xl bg-emerald-600 px-3 py-2 text-center text-xs font-bold text-white" href={`https://wa.me/${customer.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">Chat WhatsApp</a></article>)}</section></div>;
 }

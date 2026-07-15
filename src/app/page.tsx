@@ -122,7 +122,7 @@ export default function Home() {
             <Button asChild size="sm" className="flex-grow h-10 rounded-none bg-white text-black hover:bg-white/90 font-bold uppercase tracking-wider text-[9px]">
               <Link href="/booking">Mulai Konsultasi</Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="flex-grow h-10 rounded-none border-white/30 text-white hover:bg-white/10 font-bold uppercase tracking-wider text-[9px]">
+            <Button asChild variant="ghost" size="sm" className="flex-grow h-10 rounded-none border border-white/30 text-white hover:bg-white/10 hover:text-white font-bold uppercase tracking-wider text-[9px]">
               <Link href="/dresses">Koleksi Gaun</Link>
             </Button>
           </div>
