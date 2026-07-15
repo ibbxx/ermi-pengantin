@@ -5,9 +5,18 @@ import type { DressUnitStatus } from '@/types';
 export async function GET(request: Request) {
   try {
     const { supabase } = await requireAdmin(request);
-    const { data, error } = await supabase.from('dress_units').select('*,dresses(id,name)').order('unit_code');
-    if (error) throw error;
-    return Response.json({ units: data || [] });
+    const [unitsResult, dressesResult] = await Promise.all([
+      supabase.from('dress_units').select('*,dresses(id,name)').order('unit_code'),
+      supabase.from('dresses').select('id,name,sizes,colors').order('name'),
+    ]);
+    if (unitsResult.error) throw unitsResult.error;
+    if (dressesResult.error) throw dressesResult.error;
+    const dresses = (dressesResult.data || []).map((dress) => ({
+      ...dress,
+      sizes: dress.sizes || [],
+      colors: dress.colors || [],
+    }));
+    return Response.json({ units: unitsResult.data || [], dresses });
   } catch (cause) {
     const status = cause instanceof Error && 'status' in cause ? Number(cause.status) : 500;
     return Response.json({ error: cause instanceof Error ? cause.message : 'Unit gagal dimuat.' }, { status });
