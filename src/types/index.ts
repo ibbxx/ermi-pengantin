@@ -13,7 +13,6 @@ export interface Dress {
   description: string;
   material: string;
   rentalDurationDays: number;
-  availableDates: string[]; // ISO Strings of available dates or booked dates depending on implementation, let's say available dates
   rating: number;
   reviewCount: number;
   isPopular: boolean;

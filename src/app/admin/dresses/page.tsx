@@ -44,7 +44,7 @@ export default function AdminDresses() {
   const [editingDress, setEditingDress] = useState<Dress | null>(null);
 
   const handleDelete = (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus gaun ini dari inventaris?')) {
+    if (confirm('Apakah Anda yakin ingin menghapus busana ini dari inventaris?')) {
       setDresses(dresses.filter((d) => d.id !== id));
     }
   };
@@ -132,7 +132,6 @@ export default function AdminDresses() {
         description,
         material,
         rentalDurationDays: 3,
-        availableDates: [],
         rating: 5.0,
         reviewCount: 0,
         isPopular,
@@ -235,17 +234,17 @@ export default function AdminDresses() {
       {/* Top Banner stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-[10px] text-stone-400 block font-bold uppercase">Total Gaun Butik</span>
-          <span className="text-xl font-black text-charcoal">{dresses.length} Item Gaun</span>
+          <span className="text-[10px] text-stone-400 block font-bold uppercase">Total Koleksi Busana</span>
+          <span className="text-xl font-black text-charcoal">{dresses.length} Item Busana</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-[10px] text-stone-400 block font-bold uppercase">Gaun Ready</span>
+          <span className="text-[10px] text-stone-400 block font-bold uppercase">Busana Ready</span>
           <span className="text-xl font-black text-emerald-600">
-            {dresses.filter((d) => d.status === 'available').length} Gaun
+            {dresses.filter((d) => d.status === 'available').length} Item
           </span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-[10px] text-stone-400 block font-bold uppercase">Gaun Maintenance</span>
+          <span className="text-[10px] text-stone-400 block font-bold uppercase">Busana Maintenance</span>
           <span className="text-xl font-black text-red-500">
             {dresses.filter((d) => d.status === 'maintenance').length} Item
           </span>
@@ -259,7 +258,7 @@ export default function AdminDresses() {
         <div className="relative flex-grow max-w-md">
           <input
             type="text"
-            placeholder="Cari gaun berdasarkan nama/kategori..."
+            placeholder="Cari busana berdasarkan nama/kategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-stone-50 border border-stone-200 focus:border-gold rounded-xl py-2 px-3 pl-9 text-xs focus:outline-none"
@@ -272,7 +271,7 @@ export default function AdminDresses() {
           onClick={handleOpenAddModal}
           className="px-4 py-2 bg-gold hover:bg-gold-dark text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
         >
-          <Plus className="h-4 w-4" /> Tambah Gaun Baru
+          <Plus className="h-4 w-4" /> Tambah Busana Baru
         </button>
 
       </div>
@@ -283,7 +282,7 @@ export default function AdminDresses() {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-stone-50 border-b border-stone-200 font-serif font-bold text-charcoal">
-                <th className="p-4 md:p-5">Foto & Nama Gaun</th>
+                <th className="p-4 md:p-5">Foto & Nama Busana</th>
                 <th className="p-4 md:p-5">Kategori</th>
                 <th className="p-4 md:p-5">Ukuran</th>
                 <th className="p-4 md:p-5">Harga Sewa</th>
@@ -323,14 +322,14 @@ export default function AdminDresses() {
                     <button
                       onClick={() => handleOpenEditModal(item)}
                       className="p-1.5 rounded border border-stone-200 hover:border-gold hover:bg-gold/5 text-stone-500 hover:text-gold-dark transition-all inline-block cursor-pointer"
-                      title="Edit Gaun"
+                      title="Edit Busana"
                     >
                       <Edit3 className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="p-1.5 rounded border border-stone-200 hover:border-red-500 hover:bg-red-50 text-stone-500 hover:text-red-700 transition-all inline-block cursor-pointer"
-                      title="Hapus Gaun"
+                      title="Hapus Busana"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -357,13 +356,13 @@ export default function AdminDresses() {
             </button>
 
             <h3 className="font-serif font-bold text-lg text-charcoal pb-2 border-b border-gold-light/10">
-              {editingDress ? 'Edit Inventaris Gaun' : 'Tambah Inventaris Gaun'}
+              {editingDress ? 'Edit Inventaris Busana' : 'Tambah Inventaris Busana'}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1">
-                  <label className="font-semibold text-charcoal">Nama Gaun / Busana</label>
+                  <label className="font-semibold text-charcoal">Nama Busana / Baju</label>
                   <input
                     type="text"
                     required
@@ -486,7 +485,7 @@ export default function AdminDresses() {
                 </div>
 
                 <div className="col-span-2 space-y-1.5">
-                  <label className="font-semibold text-charcoal block">Foto Gaun (Maks. 500 KB per gambar)</label>
+                  <label className="font-semibold text-charcoal block">Foto Busana (Maks. 500 KB per gambar)</label>
                   
                   {/* Drag & Drop Box */}
                   <div
@@ -546,7 +545,7 @@ export default function AdminDresses() {
                 </div>
 
                 <div className="col-span-2 space-y-1">
-                  <label className="font-semibold text-charcoal">Deskripsi Gaun</label>
+                  <label className="font-semibold text-charcoal">Deskripsi Busana / Baju</label>
                   <textarea
                     rows={3}
                     value={description}
@@ -561,7 +560,7 @@ export default function AdminDresses() {
                   type="submit"
                   className="w-full py-3 bg-gold hover:bg-gold-dark text-white font-bold rounded-xl uppercase tracking-wider shadow-md cursor-pointer"
                 >
-                  {editingDress ? 'Simpan Perubahan Gaun' : 'Simpan Gaun Baru'}
+                  {editingDress ? 'Simpan Perubahan Busana' : 'Simpan Busana Baru'}
                 </button>
               </div>
             </form>

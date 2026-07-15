@@ -32,8 +32,8 @@ export default function Home() {
 
   const services = [
     {
-      title: 'Sewa Gaun Pengantin',
-      description: 'Gaun mewah bernuansa modern, kebaya prada adat, baju adat tradisional, hingga jas formal dengan jaminan fitting sempurna.',
+      title: 'Sewa Baju & Busana',
+      description: 'Baju pernikahan mewah bernuansa modern, kebaya prada adat, baju adat tradisional, hingga jas formal dengan jaminan fitting sempurna.',
       href: '/dresses',
       img: dresses.find((dress) => dress.images[0])?.images[0] || '',
     },
@@ -76,8 +76,8 @@ export default function Home() {
 
   const faqs = [
     {
-      q: 'Bagaimana sistem sewa gaun pengantin di Elika?',
-      a: 'Sewa gaun berdurasi 3 hari (hari pertama fitting akhir/pengambilan, hari kedua acara pernikahan, hari ketiga pengembalian). Kami juga melayani perpanjangan durasi sewa dengan konfirmasi sebelumnya.'
+      q: 'Bagaimana sistem sewa baju dan busana di Elika?',
+      a: 'Sewa baju/busana berdurasi 3 hari (hari pertama fitting akhir/pengambilan, hari kedua acara pernikahan, hari ketiga pengembalian). Kami juga melayani perpanjangan durasi sewa dengan konfirmasi sebelumnya.'
     },
     {
       q: 'Apakah harga paket sudah termasuk biaya transportasi?',
@@ -85,11 +85,11 @@ export default function Home() {
     },
     {
       q: 'Apakah bisa memesan sewa baju saja atau makeup saja?',
-      a: 'Tentu bisa! Kami menyediakan layanan terpisah (ala carte) baik sewa baju pengantin di katalog /dresses, paket makeup di /makeup, maupun dekorasi di /decor. Anda bebas memadukan sesuai kebutuhan.'
+      a: 'Tentu bisa! Kami menyediakan layanan terpisah (ala carte) baik sewa baju/busana di katalog /dresses, paket makeup di /makeup, maupun dekorasi di /decor. Anda bebas memadukan sesuai kebutuhan.'
     },
     {
-      q: 'Bagaimana jika gaun yang saya sewa mengalami kerusakan kecil?',
-      a: 'Kerusakan kecil akibat pemakaian wajar (seperti kancing lepas atau noda kosmetik ringan) ditanggung oleh uang jaminan (deposit) yang dikembalikan setelah gaun diperiksa. Untuk kerusakan fatal/sobek parah, akan dikenakan denda sesuai syarat sewa.'
+      q: 'Bagaimana jika baju/busana yang saya sewa mengalami kerusakan kecil?',
+      a: 'Kerusakan kecil akibat pemakaian wajar (seperti kancing lepas atau noda kosmetik ringan) ditanggung oleh uang jaminan (deposit) yang dikembalikan setelah baju/busana diperiksa. Untuk kerusakan fatal/sobek parah, akan dikenakan denda sesuai syarat sewa.'
     }
   ];
 
@@ -127,7 +127,7 @@ export default function Home() {
             </h1>
             
             <p className="text-stone-200 text-lg leading-relaxed font-light">
-              Satu tempat terbaik untuk menyewa gaun pengantin mewah, riasan wajah menawan dari MUA profesional, dan dekorasi pernikahan megah.
+              Satu tempat terbaik untuk menyewa baju dan busana pengantin mewah, riasan wajah menawan dari MUA profesional, dan dekorasi pernikahan megah.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
@@ -141,7 +141,7 @@ export default function Home() {
                 href="/dresses"
                 className="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 backdrop-blur-sm text-center"
               >
-                Lihat Katalog Gaun
+                Lihat Katalog Baju
               </Link>
             </div>
           </div>
@@ -197,13 +197,13 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-4">
             <div className="space-y-2 text-center md:text-left max-w-lg">
               <span className="text-xs uppercase tracking-widest text-gold-dark font-bold">Koleksi Terpopuler</span>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Katalog Gaun Pengantin Unggulan</h2>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Katalog Baju & Busana Unggulan</h2>
             </div>
             <Link
               href="/dresses"
               className="inline-flex items-center px-6 py-2.5 bg-gold/10 hover:bg-gold/20 text-gold-dark rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
             >
-              Lihat Semua Gaun ({dresses.length})
+              Lihat Semua Baju ({dresses.length})
             </Link>
           </div>
 

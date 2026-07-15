@@ -30,7 +30,7 @@ export default function DressCard({ dress }: DressCardProps) {
             loading="lazy"
           />
         ) : (
-          <ImagePlaceholder label="Foto gaun kosong" />
+          <ImagePlaceholder label="Foto busana kosong" />
         )}
         {/* Popular Badge */}
         {dress.isPopular && (

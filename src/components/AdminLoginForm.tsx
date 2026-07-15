@@ -34,7 +34,6 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
           : authError.message);
         setIsLoading(false);
       } else {
-        localStorage.setItem('elika_admin_logged_in', 'true');
         onLoginSuccess();
       }
     } catch (err: any) {

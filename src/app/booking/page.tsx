@@ -473,14 +473,14 @@ function BookingFormContent() {
                     className="h-4.5 w-4.5 rounded border-stone-300 text-gold focus:ring-gold accent-gold"
                   />
                   <span className="text-sm font-semibold text-charcoal group-hover:text-gold-dark transition-colors">
-                    Sewa Baju Pengantin
+                    Sewa Baju & Busana
                   </span>
                 </label>
 
                 {selectDressActive && (
                   <div className="bg-ivory-light p-4 rounded-xl border border-gold-light/20 space-y-3 animate-fade-in text-xs grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-3">
-                      <label className="font-semibold text-stone-600 block mb-1">Pilih Gaun/Baju:</label>
+                      <label className="font-semibold text-stone-600 block mb-1">Pilih Baju/Busana:</label>
                       <select
                         value={selectedDressId}
                         onChange={(e) => setSelectedDressId(e.target.value)}

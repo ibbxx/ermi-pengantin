@@ -9,7 +9,7 @@ import { useBookings } from '@/data/db';
 export default function AdminDashboardOverview() {
   const [bookings] = useBookings();
 
-  // Compute stats based on localStorage bookings list
+  // Compute stats from the bookings loaded from Supabase.
   const stats = useMemo(() => {
     const cleanNum = (str: string) => Number(str.replace(/[^0-9]/g, ''));
     

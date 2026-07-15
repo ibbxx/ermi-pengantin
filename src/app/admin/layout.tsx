@@ -37,26 +37,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   useEffect(() => {
     setIsMounted(true);
     
-    // Check real Supabase auth session instead of localStorage
+    // Supabase Auth is the only source of truth for the admin session.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const hasSession = !!session;
-      setIsLoggedIn(hasSession);
-      if (hasSession) {
-        localStorage.setItem('elika_admin_logged_in', 'true');
-      } else {
-        localStorage.removeItem('elika_admin_logged_in');
-      }
+      setIsLoggedIn(!!session);
     });
 
     // Listen for auth state changes (login/logout/token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const hasSession = !!session;
-      setIsLoggedIn(hasSession);
-      if (hasSession) {
-        localStorage.setItem('elika_admin_logged_in', 'true');
-      } else {
-        localStorage.removeItem('elika_admin_logged_in');
-      }
+      setIsLoggedIn(!!session);
     });
 
     return () => subscription.unsubscribe();
@@ -65,7 +53,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const sidebarLinks = [
     { name: 'Dashboard Overview', href: '/admin', icon: LayoutDashboard },
     { name: 'Daftar Booking', href: '/admin/bookings', icon: Calendar },
-    { name: 'Koleksi Gaun', href: '/admin/dresses', icon: Scissors },
+    { name: 'Kelola Baju & Busana', href: '/admin/dresses', icon: Scissors },
     { name: 'Layanan Makeup', href: '/admin/makeup', icon: Sparkles },
     { name: 'Tema Dekorasi', href: '/admin/decor', icon: Layers },
     { name: 'Paket Pernikahan', href: '/admin/packages', icon: Award },
@@ -85,7 +73,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const handleLogout = async () => {
     if (confirm('Apakah Anda yakin ingin keluar dari panel admin?')) {
       await supabase.auth.signOut();
-      localStorage.removeItem('elika_admin_logged_in');
       setIsLoggedIn(false);
       router.push('/');
     }
