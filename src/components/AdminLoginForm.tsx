@@ -51,8 +51,7 @@ export default function AdminLoginForm({ onLoginSuccess }: AdminLoginFormProps) 
         {/* Top Header */}
         <div className="text-center space-y-1.5">
           <h1 className="text-xl md:text-2xl font-serif font-bold text-charcoal">
-            Elika<span className="text-gold font-normal font-sans ml-1">&</span>
-            <span className="text-gold"> Atelier</span>
+            Ermi<span className="text-gold"> Pengantin</span>
           </h1>
           <p className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">Admin Panel Login</p>
         </div>

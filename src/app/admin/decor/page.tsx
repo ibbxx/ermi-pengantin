@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Plus, Trash2, X, Edit3, Upload, Loader2 } from 'lucide-react';
 import { useDecor } from '@/data/db';
 import { DecorPackage } from '@/types';
@@ -12,10 +13,10 @@ export default function AdminDecor() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingDecor, setEditingDecor] = useState<DecorPackage | null>(null);
 
+  const [decorType, setDecorType] = useState<DecorPackage['decorType']>('package');
   const [name, setName] = useState('');
   const [theme, setTheme] = useState('');
   const [price, setPrice] = useState(0);
-  const [venueSize, setVenueSize] = useState('');
   const [description, setDescription] = useState('');
   const [featuresInput, setFeaturesInput] = useState('');
   const [imagesList, setImagesList] = useState<string[]>([]);
@@ -30,7 +31,7 @@ export default function AdminDecor() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus tema dekorasi ini dari katalog?')) {
+    if (confirm('Apakah Anda yakin ingin menghapus dekorasi ini dari katalog?')) {
       const decor = decorations.find((d) => d.id === id);
       if (decor) {
         for (const img of decor.images) {
@@ -43,10 +44,10 @@ export default function AdminDecor() {
 
   const resetForm = () => {
     setEditingDecor(null);
+    setDecorType('package');
     setName('');
     setTheme('');
     setPrice(0);
-    setVenueSize('');
     setDescription('');
     setFeaturesInput('');
     setImagesList([]);
@@ -59,12 +60,12 @@ export default function AdminDecor() {
 
   const handleOpenEditModal = (decor: DecorPackage) => {
     setEditingDecor(decor);
+    setDecorType(decor.decorType);
     setName(decor.name);
     setTheme(decor.theme);
     setPrice(decor.price);
-    setVenueSize(decor.venueSize);
     setDescription(decor.description);
-    setFeaturesInput(decor.features.join(', '));
+    setFeaturesInput(decor.features.join('\n'));
     setImagesList(decor.images || []);
     setShowAddModal(true);
   };
@@ -75,7 +76,7 @@ export default function AdminDecor() {
     try {
       const url = await uploadImage(file, 'decor');
       setImagesList([url]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Gagal mengunggah gambar:', error);
       alert(error instanceof Error ? error.message : 'Gagal mengunggah gambar. Silakan coba lagi.');
     } finally {
@@ -89,12 +90,12 @@ export default function AdminDecor() {
 
     const decorPayload: DecorPackage = {
       id: editingDecor?.id || `decor-${Date.now()}`,
+      decorType,
       name,
       theme,
       price,
       description,
-      venueSize,
-      features: featuresInput.split(',').map((f) => f.trim()).filter(Boolean),
+      features: featuresInput.split('\n').map((detail) => detail.trim()).filter(Boolean),
       images: imagesList
     };
 
@@ -114,14 +115,14 @@ export default function AdminDecor() {
       {/* Header controls */}
       <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
         <div>
-          <h2 className="font-serif font-bold text-base text-charcoal">Tema & Paket Dekorasi Pernikahan</h2>
-          <p className="text-[10px] text-stone-400">Kelola tema backdrop pelaminan, pencahayaan panggung, dan kapasitas venue.</p>
+          <h2 className="font-serif font-bold text-base text-charcoal">Katalog Dekorasi</h2>
+          <p className="text-[10px] text-stone-400">Kelola paket lengkap dan item dekorasi satuan yang tampil di katalog.</p>
         </div>
         <button
           onClick={handleOpenAddModal}
           className="px-4 py-2 bg-gold hover:bg-gold-dark text-white rounded-xl font-semibold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
         >
-          <Plus className="h-4 w-4" /> Tambah Tema
+          <Plus className="h-4 w-4" /> Tambah Dekorasi
         </button>
       </div>
 
@@ -130,26 +131,33 @@ export default function AdminDecor() {
         {decorations.map((pkg) => (
           <div key={pkg.id} className="bg-white p-5 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between space-y-4">
             <div className="space-y-3">
-              <div className="aspect-[4/3] rounded-xl overflow-hidden bg-stone-150">
+              <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-stone-150">
                 {pkg.images[0] ? (
-                  <img src={pkg.images[0]} alt={pkg.name} className="w-full h-full object-cover" />
+                  <Image src={pkg.images[0]} alt={pkg.name} fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
                 ) : (
                   <ImagePlaceholder label="Foto dekor kosong" />
                 )}
               </div>
               
-              <div className="space-y-1">
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-gold/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-gold-dark">
+                    {pkg.decorType === 'package' ? 'Paket Dekorasi' : 'Item Dekorasi'}
+                  </span>
+                  <span className="rounded-full bg-stone-100 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                    {pkg.theme}
+                  </span>
+                </div>
                 <div className="flex justify-between items-start">
                   <h3 className="font-serif font-bold text-sm text-charcoal leading-tight">{pkg.name}</h3>
-                  <span className="font-bold text-gold-dark">{formatPrice(pkg.price)}</span>
+                  <span className="text-right font-bold text-gold-dark">Mulai {formatPrice(pkg.price)}</span>
                 </div>
-                <span className="text-[9px] font-bold text-stone-400 uppercase">Kapasitas: {pkg.venueSize}</span>
               </div>
 
               <p className="text-[11px] text-stone-500 leading-normal">{pkg.description}</p>
               
               <div className="space-y-1 pt-1">
-                <span className="font-bold text-stone-400 block uppercase text-[9px]">Elemen Dekorasi:</span>
+                <span className="font-bold text-stone-400 block uppercase text-[9px]">Detail:</span>
                 <ul className="list-disc pl-4 space-y-0.5 text-stone-600">
                   {pkg.features.slice(0, 4).map((feat, i) => (
                     <li key={i}>{feat}</li>
@@ -163,14 +171,14 @@ export default function AdminDecor() {
               <button
                 onClick={() => handleOpenEditModal(pkg)}
                 className="p-1.5 rounded border border-stone-200 hover:border-gold hover:bg-gold/5 text-stone-500 hover:text-gold-dark transition-all cursor-pointer"
-                title="Edit Tema"
+                title="Edit Dekorasi"
               >
                 <Edit3 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => handleDelete(pkg.id)}
                 className="p-1.5 rounded border border-stone-200 hover:border-red-500 hover:bg-red-50 text-stone-500 hover:text-red-700 transition-all cursor-pointer"
-                title="Hapus Tema"
+                title="Hapus Dekorasi"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -178,6 +186,13 @@ export default function AdminDecor() {
           </div>
         ))}
       </div>
+
+      {decorations.length === 0 && (
+        <div className="rounded-3xl border border-dashed border-stone-300 bg-white p-10 text-center">
+          <p className="font-serif text-lg font-bold text-charcoal">Katalog dekorasi masih kosong</p>
+          <p className="mt-1 text-[11px] text-stone-500">Tambahkan paket atau item dekorasi pertama dari tombol di atas.</p>
+        </div>
+      )}
 
       {/* Add Modal */}
       {showAddModal && (
@@ -194,19 +209,34 @@ export default function AdminDecor() {
             </button>
 
             <h3 className="font-serif font-bold text-lg text-charcoal pb-2 border-b border-gold-light/10">
-              {editingDecor ? 'Edit Tema Dekorasi' : 'Tambah Tema Dekorasi'}
+              {editingDecor ? 'Edit Dekorasi' : 'Tambah Dekorasi'}
             </h3>
 
             <form onSubmit={handleSubmitDecor} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-semibold text-charcoal">Nama Tema Dekorasi</label>
+                <label className="font-semibold text-charcoal">Tipe Dekorasi</label>
+                <select
+                  value={decorType}
+                  onChange={(e) => setDecorType(e.target.value as DecorPackage['decorType'])}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
+                >
+                  <option value="package">Paket Dekorasi</option>
+                  <option value="item">Item Dekorasi</option>
+                </select>
+                <p className="text-[9px] leading-relaxed text-stone-400">
+                  Paket dapat dibooking langsung. Item dipesan melalui WhatsApp.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-charcoal">Nama Dekorasi</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
-                  placeholder="Misal: Rustic Forest Romance"
+                  placeholder="Misal: Paket Rustic Romance atau Vas Bunga Meja"
                 />
               </div>
 
@@ -228,6 +258,7 @@ export default function AdminDecor() {
                   <input
                     type="number"
                     required
+                    min={1}
                     value={price}
                     onChange={(e) => setPrice(Number(e.target.value))}
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
@@ -236,34 +267,23 @@ export default function AdminDecor() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-charcoal">Kapasitas / Ukuran Venue</label>
-                <input
-                  type="text"
-                  required
-                  value={venueSize}
-                  onChange={(e) => setVenueSize(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
-                  placeholder="Misal: Indoor Ballroom (300-800 tamu)"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-charcoal">Fasilitas / Detail Dekorasi (Pisahkan dengan koma)</label>
+                <label className="font-semibold text-charcoal">Daftar Detail (Satu detail per baris)</label>
                 <textarea
-                  rows={2}
+                  rows={5}
                   required
                   value={featuresInput}
                   onChange={(e) => setFeaturesInput(e.target.value)}
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold resize-none"
+                  placeholder={'Ukuran: 40 × 60 cm\nMaterial: Kayu dan bunga artificial\nWarna: Ivory\nArea pemasangan: Meja penerima tamu'}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="font-semibold text-charcoal">Foto Tema Dekorasi</label>
+                <label className="font-semibold text-charcoal">Foto Utama Dekorasi</label>
                 <div className="h-36 overflow-hidden rounded-xl border border-stone-200 bg-stone-100">
                   {imagesList[0] ? (
                     <div className="relative h-full">
-                      <img src={imagesList[0]} alt="Preview Dekorasi" className="h-full w-full object-cover" />
+                      <Image src={imagesList[0]} alt="Preview Dekorasi" fill sizes="448px" className="object-cover" />
                       <button
                         type="button"
                         onClick={() => setImagesList([])}
@@ -304,7 +324,7 @@ export default function AdminDecor() {
                   type="submit"
                   className="w-full py-3 bg-gold hover:bg-gold-dark text-white font-bold rounded-xl uppercase tracking-wider shadow-md cursor-pointer"
                 >
-                  {editingDecor ? 'Simpan Perubahan Tema' : 'Simpan Tema Dekorasi'}
+                  {editingDecor ? 'Simpan Perubahan' : 'Simpan Dekorasi'}
                 </button>
               </div>
             </form>

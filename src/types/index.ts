@@ -30,12 +30,12 @@ export interface MakeupPackage {
 
 export interface DecorPackage {
   id: string;
+  decorType: 'package' | 'item';
   name: string;
   theme: string; // Traditional, Modern, Rustic, White Classic, Garden
   price: number; // Mulai dari
   description: string;
-  venueSize: string; // e.g. "Indoor Hall 15-20m", "Outdoor Garden 100-200 pax"
-  features: string[]; // ['Backdrop 6m', 'Lighting System', 'Fresh Flower Decoration']
+  features: string[]; // Detail fleksibel: ukuran, material, warna, isi paket, dan lainnya
   images: string[];
 }
 
@@ -108,6 +108,7 @@ export interface Booking {
   paymentMethod: string; // 'va_bca' | 'va_mandiri' | 'gopay' | 'credit_card'
   paymentStatus: 'pending' | 'paid' | 'failed';
   bookingStatus: BookingStatus;
+  paymentProof?: string;
   createdAt: string;
 }
 
@@ -163,5 +164,13 @@ export interface SystemSettings {
   transportBase: number;
   address: string;
   heroImage: string;
+  serviceDressImage: string;
+  serviceMakeupImage: string;
+  serviceDecorImage: string;
+  tfEnabled: boolean;
+  tfBankName: string;
+  tfAccountNumber: string;
+  tfAccountHolder: string;
+  qrisEnabled: boolean;
+  qrisImage: string;
 }
-

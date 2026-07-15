@@ -25,7 +25,7 @@ export default function WhatsAppFloatingButton() {
 
   const handleWhatsAppRedirect = () => {
     const phoneNumber = settings.whatsappAdmin;
-    const message = encodeURIComponent('Halo Elika Wedding, saya tertarik dengan layanan sewa gaun/makeup/dekorasi untuk pernikahan saya. Ingin konsultasi lebih lanjut.');
+    const message = encodeURIComponent('Halo Ermi Pengantin, saya tertarik dengan layanan sewa gaun, makeup, atau dekorasi untuk pernikahan saya. Saya ingin konsultasi lebih lanjut.');
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
@@ -40,7 +40,7 @@ export default function WhatsAppFloatingButton() {
           >
             <X className="h-4 w-4" />
           </button>
-          <div className="text-xs font-semibold text-gold-dark mb-1">Elika Wedding Assistant</div>
+          <div className="text-xs font-semibold text-gold-dark mb-1">Ermi Pengantin</div>
           <p className="text-xs text-stone-600 leading-relaxed mb-3">
             Halo! Ada yang bisa kami bantu mengenai sewa gaun, makeup, atau dekorasi? Konsultasikan pernikahan impian Anda bersama kami!
           </p>

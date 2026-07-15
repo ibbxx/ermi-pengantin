@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Playfair_Display, Geist } from "next/font/google";
 import Script from "next/script";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
+import { ToastProvider } from "@/components/ui/toast-simple";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
 const playfair = Playfair_Display({
   variable: "--font-serif",
@@ -12,14 +14,10 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Elika Wedding - Sewa Baju Pengantin, Makeup & Dekorasi Modern",
+  title: "Ermi Pengantin - Sewa Baju Pengantin, Makeup & Dekorasi Modern",
   description: "Layanan pernikahan premium di Indonesia. Sewa gaun pengantin modern, kebaya, baju adat, makeup artist (MUA) profesional, dan dekorasi pernikahan impian dalam satu tempat.",
 };
 
@@ -31,9 +29,9 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${playfair.variable} ${inter.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", playfair.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-full flex flex-col bg-ivory-light text-charcoal font-sans">
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         {process.env.NODE_ENV === "development" && (
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"
@@ -41,13 +39,13 @@ export default function RootLayout({
             strategy="beforeInteractive"
           />
         )}
-        <Navbar />
-        <main className="flex-grow pt-20">{children}</main>
-        <Footer />
-        <WhatsAppFloatingButton />
+        <ToastProvider>
+          <Navbar />
+          <main className="flex-grow pt-16">{children}</main>
+          <Footer />
+          <WhatsAppFloatingButton />
+        </ToastProvider>
       </body>
     </html>
   );
 }
-
-

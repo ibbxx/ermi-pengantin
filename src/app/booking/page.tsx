@@ -2,9 +2,29 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, Calendar, MapPin, User, Phone, Mail, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { 
+  ShoppingBag, 
+  Calendar, 
+  User, 
+  FileText, 
+  CheckCircle2, 
+  AlertTriangle, 
+  ShieldCheck,
+  ChevronRight,
+  ChevronLeft,
+  Info,
+  MapPin,
+  Mail,
+  Phone,
+  Sparkles
+} from 'lucide-react';
 import { useDresses, useMakeup, useDecor, usePackages, useSettings, db } from '@/data/db';
 import { Booking } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import Breadcrumb from '@/components/Breadcrumb';
 
 // Wrap the actual form in a suspense boundary due to useSearchParams
 function BookingFormContent() {
@@ -16,6 +36,11 @@ function BookingFormContent() {
   const [decorations] = useDecor();
   const [packages] = usePackages();
   const [settings] = useSettings();
+  
+  const packageDecorations = useMemo(
+    () => decorations.filter((decor) => decor.decorType === 'package'),
+    [decorations]
+  );
 
   // Pre-filled URL parameters
   const preSelectedDressId = searchParams?.get('dressId') || '';
@@ -25,6 +50,18 @@ function BookingFormContent() {
   const preSelectedMakeupId = searchParams?.get('makeupId') || '';
   const preSelectedDecorId = searchParams?.get('decorId') || '';
   const preSelectedPackageId = searchParams?.get('packageId') || '';
+
+  const tomorrowDateString = useMemo(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  // Wizard Stepper State
+  const [currentStep, setCurrentStep] = useState(1);
 
   // Form states
   const [name, setName] = useState('');
@@ -47,15 +84,18 @@ function BookingFormContent() {
   const [selectedColor, setSelectedColor] = useState(preSelectedColor || (dresses[0]?.colors[0] || ''));
   
   const [selectedMakeupId, setSelectedMakeupId] = useState(preSelectedMakeupId || (makeup[0]?.id || ''));
-  const [selectedDecorId, setSelectedDecorId] = useState(preSelectedDecorId || (decorations[0]?.id || ''));
+  const [selectedDecorId, setSelectedDecorId] = useState(preSelectedDecorId);
   const [selectedPackageId, setSelectedPackageId] = useState(preSelectedPackageId || (packages[0]?.id || ''));
 
   const [notes, setNotes] = useState('');
   const [paymentType, setPaymentType] = useState<'dp' | 'full'>('dp');
-  const [paymentMethod, setPaymentMethod] = useState('va_bca');
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const selectedDecor = packageDecorations.find((decor) => decor.id === selectedDecorId);
+  const isDecorSelectionActive = selectDecorActive && !!selectedDecor;
 
   // Sync initial ids once database is loaded
   useEffect(() => {
@@ -72,12 +112,6 @@ function BookingFormContent() {
   }, [makeup, selectedMakeupId]);
 
   useEffect(() => {
-    if (!selectedDecorId && decorations.length > 0) {
-      setSelectedDecorId(decorations[0].id);
-    }
-  }, [decorations, selectedDecorId]);
-
-  useEffect(() => {
     if (!selectedPackageId && packages.length > 0) {
       setSelectedPackageId(packages[0].id);
     }
@@ -91,6 +125,17 @@ function BookingFormContent() {
     }
   }, [selectedDressId, dresses]);
 
+  // Auto set payment method based on enabled settings
+  useEffect(() => {
+    if (settings && !paymentMethod) {
+      if (settings.tfEnabled) {
+        setPaymentMethod('tf');
+      } else if (settings.qrisEnabled) {
+        setPaymentMethod('qris');
+      }
+    }
+  }, [settings, paymentMethod]);
+
   // If wedding package is active, other services are disabled/cleared (since package is all-in-one)
   useEffect(() => {
     if (selectPackageActive) {
@@ -101,10 +146,10 @@ function BookingFormContent() {
   }, [selectPackageActive]);
 
   useEffect(() => {
-    if (selectDressActive || selectMakeupActive || selectDecorActive) {
+    if (selectDressActive || selectMakeupActive || isDecorSelectionActive) {
       setSelectPackageActive(false);
     }
-  }, [selectDressActive, selectMakeupActive, selectDecorActive]);
+  }, [selectDressActive, selectMakeupActive, isDecorSelectionActive]);
 
   // Calculations
   const calculations = useMemo(() => {
@@ -142,8 +187,8 @@ function BookingFormContent() {
           makeupSelected = { id: mua.id, name: mua.name, price: mua.price };
         }
       }
-      if (selectDecorActive) {
-        const decor = decorations.find((d) => d.id === selectedDecorId);
+      if (isDecorSelectionActive) {
+        const decor = packageDecorations.find((d) => d.id === selectedDecorId);
         if (decor) {
           subtotal += decor.price;
           decorSelected = { id: decor.id, name: decor.name, price: decor.price };
@@ -155,7 +200,6 @@ function BookingFormContent() {
     const total = subtotal + transportFee;
 
     // Minimum DP required:
-    // If package, check package's required DP. If standard ala carte, say minDpPercent of total
     let minDp = 0;
     if (selectPackageActive) {
       const pkg = packages.find((p) => p.id === selectedPackageId);
@@ -177,7 +221,7 @@ function BookingFormContent() {
   }, [
     selectDressActive,
     selectMakeupActive,
-    selectDecorActive,
+    isDecorSelectionActive,
     selectPackageActive,
     selectedDressId,
     selectedSize,
@@ -188,7 +232,7 @@ function BookingFormContent() {
     packages,
     dresses,
     makeup,
-    decorations,
+    packageDecorations,
     settings.minDpPercent,
     settings.transportBase,
   ]);
@@ -201,605 +245,783 @@ function BookingFormContent() {
     }).format(price);
   };
 
-  // Form Validation
-  const validateForm = () => {
+  // Step Validation
+  const validateStep1 = () => {
     const tempErrors: Record<string, string> = {};
     if (!name.trim()) tempErrors.name = 'Nama pelanggan wajib diisi';
     if (!whatsapp.trim()) tempErrors.whatsapp = 'Nomor WhatsApp wajib diisi';
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) tempErrors.email = 'Email tidak valid';
     if (!address.trim()) tempErrors.address = 'Alamat lengkap wajib diisi';
-    if (!eventDate) tempErrors.eventDate = 'Tanggal acara wajib dipilih';
-    if (!eventLocation.trim()) tempErrors.eventLocation = 'Lokasi venue/acara wajib diisi';
-
-    if (!selectDressActive && !selectMakeupActive && !selectDecorActive && !selectPackageActive) {
-      tempErrors.services = 'Pilih minimal satu layanan atau satu paket lengkap';
-    }
-
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const tempErrors: Record<string, string> = {};
+    if (!eventDate) {
+      tempErrors.eventDate = 'Tanggal acara wajib dipilih';
+    } else if (eventDate < tomorrowDateString) {
+      tempErrors.eventDate = 'Tanggal acara minimal harus besok hari';
+    }
+    if (!eventLocation.trim()) tempErrors.eventLocation = 'Lokasi acara wajib diisi';
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    const tempErrors: Record<string, string> = {};
+    if (!selectDressActive && !selectMakeupActive && !isDecorSelectionActive && !selectPackageActive) {
+      tempErrors.services = 'Pilih minimal satu layanan atau satu paket lengkap';
+    }
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+
+  const validateStep4 = () => {
+    const tempErrors: Record<string, string> = {};
+    if (!paymentMethod) {
+      tempErrors.paymentMethod = 'Pilih salah satu metode pembayaran';
+    }
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1 && validateStep1()) setCurrentStep(2);
+    else if (currentStep === 2 && validateStep2()) setCurrentStep(3);
+    else if (currentStep === 3 && validateStep3()) setCurrentStep(4);
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   // Handle Form Submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateStep1() || !validateStep2() || !validateStep3() || !validateStep4()) return;
 
     setIsSubmitting(true);
 
-    // Simulate submission delay
-    setTimeout(() => {
-      // Create new booking object
-      const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      const bookingId = `book-${Math.random().toString(36).substring(2, 9)}`;
-      
-      const newBooking: Booking = {
-        id: bookingId,
-        invoiceNumber: invoiceNum,
-        customerId: 'cust-temp', // Anonymous customer
-        customerName: name,
-        customerWhatsApp: whatsapp,
-        customerEmail: email,
-        customerAddress: address,
-        eventDate: eventDate,
-        eventLocation: eventLocation,
-        eventType: eventType,
-        servicesSelected: {
-          dresses: calculations.dressesSelected,
-          makeup: calculations.makeupSelected,
-          decor: calculations.decorSelected,
-          weddingPackage: calculations.packageSelected,
-        },
-        notes: notes,
-        subtotal: formatPrice(calculations.subtotal),
-        additionalFees: formatPrice(calculations.transportFee),
-        depositRequired: formatPrice(calculations.minDp),
-        totalAmount: formatPrice(calculations.total),
-        paymentType: paymentType,
-        paymentMethod: paymentMethod,
-        paymentStatus: 'pending',
-        bookingStatus: 'pending',
-        createdAt: new Date().toISOString()
-      };
+    const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const bookingId = `book-${Math.random().toString(36).substring(2, 9)}`;
 
-      // Save new booking to database
-      db.saveBooking(newBooking)
-        .then(() => {
-          setIsSubmitting(false);
-          // Redirect to checkout with bookingId
-          router.push(`/checkout?bookingId=${bookingId}`);
-        })
-        .catch((err) => {
-          console.error('Failed to create booking:', err);
-          setIsSubmitting(false);
-          alert('Gagal membuat pesanan. Silakan coba lagi.');
-        });
-    }, 1500);
+    const newBooking: Booking = {
+      id: bookingId,
+      invoiceNumber: invoiceNum,
+      customerId: 'cust-temp',
+      customerName: name,
+      customerWhatsApp: whatsapp,
+      customerEmail: email,
+      customerAddress: address,
+      eventDate: eventDate,
+      eventLocation: eventLocation,
+      eventType: eventType,
+      servicesSelected: {
+        dresses: calculations.dressesSelected,
+        makeup: calculations.makeupSelected,
+        decor: calculations.decorSelected,
+        weddingPackage: calculations.packageSelected,
+      },
+      notes: notes,
+      subtotal: formatPrice(calculations.subtotal),
+      additionalFees: formatPrice(calculations.transportFee),
+      depositRequired: formatPrice(calculations.minDp),
+      totalAmount: formatPrice(calculations.total),
+      paymentType: paymentType,
+      paymentMethod: paymentMethod,
+      paymentStatus: 'pending',
+      bookingStatus: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    db.saveBooking(newBooking)
+      .then(() => {
+        setIsSubmitting(false);
+        router.push(`/checkout?bookingId=${bookingId}`);
+      })
+      .catch((err) => {
+        console.error('Failed to create booking:', err);
+        setIsSubmitting(false);
+        alert('Gagal membuat pesanan. Silakan coba lagi.');
+      });
   };
 
+  const stepsList = [
+    { number: 1, label: 'Data Diri', desc: 'Identitas Anda' },
+    { number: 2, label: 'Jadwal & Lokasi', desc: 'Waktu & Tempat' },
+    { number: 3, label: 'Pilih Layanan', desc: 'Inklusi Wedding' },
+    { number: 4, label: 'Konfirmasi', desc: 'Metode Pembayaran' }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      
-      {/* Header */}
-      <div className="text-center max-w-xl mx-auto space-y-2 mb-10">
-        <h1 className="text-3xl md:text-5xl font-serif font-bold text-charcoal">Formulir Booking Layanan</h1>
-        <p className="text-xs text-stone-muted">
-          Silakan isi detail data diri, waktu pernikahan, dan pilih layanan wedding yang Anda kehendaki di bawah ini.
-        </p>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="flex flex-col gap-2">
+        <Breadcrumb customLastLabel={`Step ${currentStep}: ${stepsList[currentStep-1].label}`} />
+        <div className="text-center max-w-xl mx-auto space-y-2 mb-4">
+          <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-foreground">Formulir Booking Layanan</h1>
+          <p className="text-xs text-muted-foreground">
+            Lengkapi rencana pernikahan Anda dalam 4 langkah mudah untuk mengamankan ketersediaan jadwal.
+          </p>
+        </div>
       </div>
 
-      {errors.services && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-xs flex items-center gap-2 mb-6 max-w-3xl mx-auto">
-          <AlertTriangle className="h-4.5 w-4.5" />
+      {/* STEPPER PROGRESS BAR */}
+      <div className="max-w-3xl mx-auto px-4 py-3 bg-card border rounded-2xl shadow-xs">
+        <div className="relative flex items-center justify-between">
+          {/* Track line */}
+          <div className="absolute top-[16px] left-[5%] right-[5%] h-0.5 bg-muted z-0">
+            <div 
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+            />
+          </div>
+
+          {stepsList.map((step) => {
+            const isCompleted = step.number < currentStep;
+            const isActive = step.number === currentStep;
+            return (
+              <button
+                key={step.number}
+                type="button"
+                onClick={() => {
+                  // Allow jumping to steps only if they are completed or validated
+                  if (step.number < currentStep) setCurrentStep(step.number);
+                  else if (step.number === 2 && validateStep1()) setCurrentStep(2);
+                  else if (step.number === 3 && validateStep1() && validateStep2()) setCurrentStep(3);
+                  else if (step.number === 4 && validateStep1() && validateStep2() && validateStep3()) setCurrentStep(4);
+                }}
+                className="relative z-10 flex flex-col items-center group cursor-pointer focus:outline-none"
+              >
+                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                  isCompleted 
+                    ? 'bg-primary border-primary text-primary-foreground' 
+                    : isActive 
+                    ? 'bg-background border-primary text-primary font-bold shadow-sm'
+                    : 'bg-background border-muted text-muted-foreground'
+                }`}>
+                  {isCompleted ? <CheckCircle2 className="size-4.5" /> : step.number}
+                </div>
+                <span className={`text-[10px] font-bold mt-1.5 hidden sm:block ${isActive ? 'text-foreground font-extrabold' : 'text-muted-foreground'}`}>
+                  {step.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {errors.services && currentStep === 3 && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-xs flex items-center gap-2 max-w-3xl mx-auto animate-fade-in">
+          <AlertTriangle className="size-4.5 shrink-0" />
           <span>{errors.services}</span>
         </div>
       )}
 
       {/* Main Grid */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
         
-        {/* LEFT COLUMN: Data Inputs (Form Fields) */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* Step 1: Customer Data */}
-          <div className="bg-white p-6 rounded-2xl border border-gold-light/20 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-lg text-charcoal flex items-center gap-2 pb-2 border-b border-gold-light/10">
-              <User className="h-5 w-5 text-gold-dark" /> 1. Data Diri Pelanggan
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-charcoal block">Nama Lengkap</label>
-                <input
-                  type="text"
-                  placeholder="Masukkan nama Anda..."
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className={`w-full bg-ivory-light border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-gold ${
-                    errors.name ? 'border-red-400' : 'border-stone-200'
-                  }`}
-                />
-                {errors.name && <span className="text-[10px] text-red-500 block">{errors.name}</span>}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-charcoal block">Nomor WhatsApp Aktif</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-stone-400 font-bold">+62</span>
-                  <input
-                    type="tel"
-                    placeholder="81234567890"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    className={`w-full bg-ivory-light border rounded-xl py-2 px-3 pl-12 text-xs focus:outline-none focus:border-gold ${
-                      errors.whatsapp ? 'border-red-400' : 'border-stone-200'
-                    }`}
-                  />
-                </div>
-                {errors.whatsapp && <span className="text-[10px] text-red-500 block">{errors.whatsapp}</span>}
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-charcoal block">Email</label>
-                <input
-                  type="email"
-                  placeholder="nama@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full bg-ivory-light border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-gold ${
-                    errors.email ? 'border-red-400' : 'border-stone-200'
-                  }`}
-                />
-                {errors.email && <span className="text-[10px] text-red-500 block">{errors.email}</span>}
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-charcoal block">Alamat Lengkap</label>
-                <textarea
-                  rows={3}
-                  placeholder="Masukkan alamat rumah lengkap Anda (untuk keperluan pengiriman/fitting)..."
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className={`w-full bg-ivory-light border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-gold resize-none ${
-                    errors.address ? 'border-red-400' : 'border-stone-200'
-                  }`}
-                />
-                {errors.address && <span className="text-[10px] text-red-500 block">{errors.address}</span>}
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: Event Details */}
-          <div className="bg-white p-6 rounded-2xl border border-gold-light/20 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-lg text-charcoal flex items-center gap-2 pb-2 border-b border-gold-light/10">
-              <Calendar className="h-5 w-5 text-gold-dark" /> 2. Detail Jadwal & Lokasi Acara
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-charcoal block">Tanggal Acara Pernikahan</label>
-                <input
-                  type="date"
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  className={`w-full bg-ivory-light border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-gold ${
-                    errors.eventDate ? 'border-red-400' : 'border-stone-200'
-                  }`}
-                />
-                {errors.eventDate && <span className="text-[10px] text-red-500 block">{errors.eventDate}</span>}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-charcoal block">Jenis Acara</label>
-                <select
-                  value={eventType}
-                  onChange={(e) => setEventType(e.target.value as any)}
-                  className="w-full bg-ivory-light border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                >
-                  <option value="akad">Akad Nikah / Pemberkatan</option>
-                  <option value="resepsi">Resepsi Pernikahan</option>
-                  <option value="prewedding">Foto Prewedding</option>
-                  <option value="lamaran">Prosesi Lamaran</option>
-                </select>
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-charcoal block">Nama & Lokasi Venue Acara</label>
-                <input
-                  type="text"
-                  placeholder="Gedung Ballroom, Hotel, Rumah Alamat E-1..."
-                  value={eventLocation}
-                  onChange={(e) => setEventLocation(e.target.value)}
-                  className={`w-full bg-ivory-light border rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-gold ${
-                    errors.eventLocation ? 'border-red-400' : 'border-stone-200'
-                  }`}
-                />
-                {errors.eventLocation && <span className="text-[10px] text-red-500 block">{errors.eventLocation}</span>}
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3: Service Custom Selection */}
-          <div className="bg-white p-6 rounded-2xl border border-gold-light/20 shadow-sm space-y-6">
-            <h3 className="font-serif font-bold text-lg text-charcoal flex items-center gap-2 pb-2 border-b border-gold-light/10">
-              <ShoppingBag className="h-5 w-5 text-gold-dark" /> 3. Pilih Layanan Pernikahan
-            </h3>
-
-            {/* Option A: Packages All-in-One */}
-            <div className="space-y-4">
-              <label className="flex items-center space-x-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={selectPackageActive}
-                  onChange={(e) => setSelectPackageActive(e.target.checked)}
-                  className="h-4.5 w-4.5 rounded border-stone-300 text-gold focus:ring-gold accent-gold"
-                />
-                <span className="text-sm font-bold text-charcoal group-hover:text-gold-dark transition-colors">
-                  Pilih Paket Wedding Lengkap (All-in-One)
-                </span>
-              </label>
-
-              {selectPackageActive && (
-                <div className="bg-ivory-light p-4 rounded-xl border border-gold-light/20 space-y-2 animate-fade-in text-xs">
-                  <label className="font-semibold text-stone-600 block mb-1">Pilih Paket Pernikahan:</label>
-                  <select
-                    value={selectedPackageId}
-                    onChange={(e) => setSelectedPackageId(e.target.value)}
-                    className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                  >
-                    {packages.map((pkg) => (
-                      <option key={pkg.id} value={pkg.id}>
-                        {pkg.name} - {formatPrice(pkg.price)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            <div className="relative py-2 flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gold-light/10" /></div>
-              <span className="relative px-3 bg-white text-[10px] text-stone-400 font-bold uppercase tracking-wider">ATAU PILIH ALA CARTE</span>
-            </div>
-
-            {/* Option B: Ala Carte List */}
-            <div className="space-y-6">
-              {/* B1: Sewa Baju */}
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={selectDressActive}
-                    onChange={(e) => setSelectDressActive(e.target.checked)}
-                    className="h-4.5 w-4.5 rounded border-stone-300 text-gold focus:ring-gold accent-gold"
-                  />
-                  <span className="text-sm font-semibold text-charcoal group-hover:text-gold-dark transition-colors">
-                    Sewa Baju & Busana
-                  </span>
-                </label>
-
-                {selectDressActive && (
-                  <div className="bg-ivory-light p-4 rounded-xl border border-gold-light/20 space-y-3 animate-fade-in text-xs grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-3">
-                      <label className="font-semibold text-stone-600 block mb-1">Pilih Baju/Busana:</label>
-                      <select
-                        value={selectedDressId}
-                        onChange={(e) => setSelectedDressId(e.target.value)}
-                        className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                      >
-                        {dresses.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name} ({d.category}) - {formatPrice(d.price)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="font-semibold text-stone-600 block mb-1">Ukuran:</label>
-                      <select
-                        value={selectedSize}
-                        onChange={(e) => setSelectedSize(e.target.value)}
-                        className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                      >
-                        {dresses.find((d) => d.id === selectedDressId)?.sizes.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="font-semibold text-stone-600 block mb-1">Pilihan Warna:</label>
-                      <select
-                        value={selectedColor}
-                        onChange={(e) => setSelectedColor(e.target.value)}
-                        className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                      >
-                        {dresses.find((d) => d.id === selectedDressId)?.colors.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* B2: Makeup MUA */}
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={selectMakeupActive}
-                    onChange={(e) => setSelectMakeupActive(e.target.checked)}
-                    className="h-4.5 w-4.5 rounded border-stone-300 text-gold focus:ring-gold accent-gold"
-                  />
-                  <span className="text-sm font-semibold text-charcoal group-hover:text-gold-dark transition-colors">
-                    Makeup Artist (MUA)
-                  </span>
-                </label>
-
-                {selectMakeupActive && (
-                  <div className="bg-ivory-light p-4 rounded-xl border border-gold-light/20 space-y-2 animate-fade-in text-xs">
-                    <label className="font-semibold text-stone-600 block mb-1">Pilih Paket Makeup:</label>
-                    <select
-                      value={selectedMakeupId}
-                      onChange={(e) => setSelectedMakeupId(e.target.value)}
-                      className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                    >
-                      {makeup.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name} - {formatPrice(m.price)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              {/* B3: Dekorasi Pelaminan */}
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={selectDecorActive}
-                    onChange={(e) => setSelectDecorActive(e.target.checked)}
-                    className="h-4.5 w-4.5 rounded border-stone-300 text-gold focus:ring-gold accent-gold"
-                  />
-                  <span className="text-sm font-semibold text-charcoal group-hover:text-gold-dark transition-colors">
-                    Dekorasi Pelaminan
-                  </span>
-                </label>
-
-                {selectDecorActive && (
-                  <div className="bg-ivory-light p-4 rounded-xl border border-gold-light/20 space-y-2 animate-fade-in text-xs">
-                    <label className="font-semibold text-stone-600 block mb-1">Pilih Tema/Paket Dekorasi:</label>
-                    <select
-                      value={selectedDecorId}
-                      onChange={(e) => setSelectedDecorId(e.target.value)}
-                      className="w-full bg-white border border-stone-200 focus:border-gold rounded-xl py-2 px-3 text-xs focus:outline-none"
-                    >
-                      {decorations.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name} ({d.theme}) - Mulai {formatPrice(d.price)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Step 4: Notes & Payment details */}
-          <div className="bg-white p-6 rounded-2xl border border-gold-light/20 shadow-sm space-y-6">
-            <h3 className="font-serif font-bold text-lg text-charcoal flex items-center gap-2 pb-2 border-b border-gold-light/10">
-              <FileText className="h-5 w-5 text-gold-dark" /> 4. Metode Pembayaran & Catatan
-            </h3>
-            
-            <div className="space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-semibold text-charcoal block">Catatan Tambahan (Kustomisasi/Permintaan Khusus)</label>
-                <textarea
-                  rows={2}
-                  placeholder="Tuliskan jika ada kebutuhan khusus seperti ukuran kerah jas, siger adat Sunda, hijab styling, dll..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-ivory-light border border-stone-200 focus:border-gold rounded-xl py-2 px-3 focus:outline-none resize-none"
-                />
-              </div>
-
-              {/* Payment Type */}
-              <div className="space-y-2">
-                <label className="font-semibold text-charcoal block">Tipe Pembayaran:</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType('dp')}
-                    className={`py-3 px-4 rounded-xl border flex flex-col items-center transition-all ${
-                      paymentType === 'dp'
-                        ? 'bg-gold/5 border-gold text-gold-dark shadow-sm ring-1 ring-gold/30'
-                        : 'bg-white border-stone-200 text-charcoal hover:border-gold-light'
-                    }`}
-                  >
-                    <span className="font-bold">Bayar DP Dulu ({selectPackageActive ? 'Tercantum' : `${settings.minDpPercent}%`})</span>
-                    <span className="text-[10px] text-stone-500 mt-1">
-                      Bayar minimal {formatPrice(calculations.minDp)} untuk aman jadwal
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentType('full')}
-                    className={`py-3 px-4 rounded-xl border flex flex-col items-center transition-all ${
-                      paymentType === 'full'
-                        ? 'bg-gold/5 border-gold text-gold-dark shadow-sm ring-1 ring-gold/30'
-                        : 'bg-white border-stone-200 text-charcoal hover:border-gold-light'
-                    }`}
-                  >
-                    <span className="font-bold">Bayar Lunas</span>
-                    <span className="text-[10px] text-stone-500 mt-1">
-                      Bayar lunas {formatPrice(calculations.total)} sekarang juga
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Payment Method */}
-              <div className="space-y-2">
-                <label className="font-semibold text-charcoal block">Metode Pembayaran Transfer:</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { label: 'Bank BCA (VA)', value: 'va_bca' },
-                    { label: 'Bank Mandiri (VA)', value: 'va_mandiri' },
-                    { label: 'Gopay / QRIS', value: 'gopay' },
-                    { label: 'Kartu Kredit', value: 'credit_card' }
-                  ].map((m) => (
-                    <button
-                      type="button"
-                      key={m.value}
-                      onClick={() => setPaymentMethod(m.value)}
-                      className={`py-2 px-3 rounded-lg border text-center font-bold transition-all ${
-                        paymentMethod === m.value
-                          ? 'bg-gold border-gold text-white shadow-sm'
-                          : 'bg-white border-stone-200 text-charcoal hover:border-gold-light'
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* RIGHT COLUMN: Interactive Bill Summary */}
-        <div className="lg:col-span-4">
-          <div className="bg-white p-6 rounded-3xl border border-gold-light/25 shadow-lg space-y-6 lg:sticky lg:top-24 text-xs">
-            <h3 className="font-serif font-bold text-base text-charcoal border-b border-gold-light/10 pb-3 flex items-center gap-1.5">
-              Ringkasan Pemesanan
-            </h3>
-
-            {/* List items selected */}
-            <div className="space-y-3.5 divide-y divide-gold-light/10 max-h-60 overflow-y-auto">
-              {!selectDressActive && !selectMakeupActive && !selectDecorActive && !selectPackageActive && (
-                <p className="text-stone-400 italic py-4 text-center">Belum ada layanan yang dipilih.</p>
-              )}
-
-              {/* Dress selected item */}
-              {selectDressActive && (
-                <div className="pt-3 first:pt-0">
-                  <div className="flex justify-between font-bold text-charcoal">
-                    <span>{dresses.find((d) => d.id === selectedDressId)?.name}</span>
-                    <span>{formatPrice(dresses.find((d) => d.id === selectedDressId)?.price || 0)}</span>
-                  </div>
-                  <div className="text-[10px] text-stone-500 mt-0.5 space-x-2">
-                    <span>Ukuran: {selectedSize}</span>
-                    <span>•</span>
-                    <span>Warna: {selectedColor}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Makeup selected item */}
-              {selectMakeupActive && (
-                <div className="pt-3 first:pt-0">
-                  <div className="flex justify-between font-bold text-charcoal">
-                    <span>{makeup.find((m) => m.id === selectedMakeupId)?.name}</span>
-                    <span>{formatPrice(makeup.find((m) => m.id === selectedMakeupId)?.price || 0)}</span>
-                  </div>
-                  <span className="text-[10px] text-stone-500 block mt-0.5">Jasa Makeup Pengantin</span>
-                </div>
-              )}
-
-              {/* Decor selected item */}
-              {selectDecorActive && (
-                <div className="pt-3 first:pt-0">
-                  <div className="flex justify-between font-bold text-charcoal">
-                    <span>{decorations.find((d) => d.id === selectedDecorId)?.name}</span>
-                    <span>{formatPrice(decorations.find((d) => d.id === selectedDecorId)?.price || 0)}</span>
-                  </div>
-                  <span className="text-[10px] text-stone-500 block mt-0.5">Dekorasi Pelaminan Venue</span>
-                </div>
-              )}
-
-              {/* Wedding Package selected item */}
-              {selectPackageActive && (
-                <div className="pt-3 first:pt-0">
-                  <div className="flex justify-between font-bold text-charcoal">
-                    <span>{packages.find((p) => p.id === selectedPackageId)?.name}</span>
-                    <span>{formatPrice(packages.find((p) => p.id === selectedPackageId)?.price || 0)}</span>
-                  </div>
-                  <span className="text-[10px] text-stone-500 block mt-0.5">Paket Pernikahan All-in-One</span>
-                </div>
-              )}
-            </div>
-
-            {/* Fees list */}
-            <div className="border-t border-gold-light/20 pt-4 space-y-2 text-stone-600">
-              <div className="flex justify-between">
-                <span>Subtotal Layanan:</span>
-                <span className="font-semibold text-charcoal">{formatPrice(calculations.subtotal)}</span>
-              </div>
-              {calculations.subtotal > 0 && (
-                <div className="flex justify-between">
-                  <span>Biaya Pengantaran/Transport:</span>
-                  <span className="font-semibold text-charcoal">{formatPrice(calculations.transportFee)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-base font-bold text-charcoal pt-2 border-t border-dashed border-gold-light/10">
-                <span>Total Estimasi:</span>
-                <span className="text-gold-dark">{formatPrice(calculations.total)}</span>
-              </div>
-            </div>
-
-            {/* DP / Full Payment Info Alert */}
-            <div className="bg-ivory border border-gold-light/20 p-4 rounded-2xl space-y-2 text-[11px] text-stone-600">
-              <div className="flex justify-between font-semibold">
-                <span>Metode Bayar:</span>
-                <span className="text-charcoal uppercase">{paymentType === 'dp' ? 'Uang Muka (DP)' : 'Lunas (Full)'}</span>
-              </div>
-              <div className="flex justify-between font-bold text-charcoal text-xs border-t border-dashed border-gold-light/15 pt-1.5">
-                <span>Jumlah Tagihan:</span>
-                <span className="text-emerald-700">
-                  {formatPrice(paymentType === 'dp' ? calculations.minDp : calculations.total)}
-                </span>
-              </div>
-              {paymentType === 'dp' && (
-                <p className="text-[9px] text-stone-400 leading-normal italic pt-1 border-t border-gold-light/5">
-                  *Sisa pelunasan sebesar {formatPrice(calculations.total - calculations.minDp)} dibayarkan selambat-lambatnya H-7 sebelum hari pelaksanaan acara.
-                </p>
-              )}
-            </div>
-
-            {/* Submission CTA */}
-            <div className="space-y-3.5">
-              <button
-                type="submit"
-                disabled={isSubmitting || calculations.subtotal === 0}
-                className="w-full py-3.5 bg-gold hover:bg-gold-dark disabled:bg-stone-300 text-white rounded-xl uppercase tracking-wider font-bold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-1.5 text-xs cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                    <span>Memproses Reservasi...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4.5 w-4.5" />
-                    <span>Lanjutkan ke Checkout</span>
-                  </>
-                )}
-              </button>
+        {/* LEFT COLUMN: Stepper Forms */}
+        <div className="lg:col-span-8">
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="font-serif text-xl flex items-center gap-2">
+                {currentStep === 1 && <User className="size-5 text-primary" />}
+                {currentStep === 2 && <Calendar className="size-5 text-primary" />}
+                {currentStep === 3 && <ShoppingBag className="size-5 text-primary" />}
+                {currentStep === 4 && <FileText className="size-5 text-primary" />}
+                {stepsList[currentStep-1].number}. {stepsList[currentStep-1].label}
+              </CardTitle>
+              <CardDescription>{stepsList[currentStep-1].desc}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
               
-              <div className="flex gap-1.5 items-center justify-center text-[10px] text-stone-400">
-                <ShieldCheck className="h-4 w-4 text-gold-dark" />
-                <span>Transaksi dijamin aman & tersertifikasi SSL</span>
-              </div>
-            </div>
+              {/* STEP 1: CUSTOMER DATA */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground block">Nama Lengkap</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: Sarah Amelia"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className={`w-full bg-muted/20 border rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                          errors.name ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      {errors.name && <span className="text-[10px] text-destructive block">{errors.name}</span>}
+                    </div>
 
-          </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground block">Nomor WhatsApp Aktif</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs text-muted-foreground/60 font-bold">+62</span>
+                        <input
+                          type="tel"
+                          placeholder="81234567890"
+                          value={whatsapp}
+                          onChange={(e) => setWhatsapp(e.target.value)}
+                          className={`w-full bg-muted/20 border rounded-xl py-2 px-3 pl-12 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                            errors.whatsapp ? 'border-destructive' : 'border-border'
+                          }`}
+                        />
+                      </div>
+                      {errors.whatsapp && <span className="text-[10px] text-destructive block">{errors.whatsapp}</span>}
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground block">Alamat Email</label>
+                      <input
+                        type="email"
+                        placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={`w-full bg-muted/20 border rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                          errors.email ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      {errors.email && <span className="text-[10px] text-destructive block">{errors.email}</span>}
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground block">Alamat Lengkap (Untuk Fitting/Pengiriman)</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Masukkan alamat rumah lengkap (jalan, nomor, RT/RW, kecamatan, kota)..."
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className={`w-full bg-muted/20 border rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none ${
+                          errors.address ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      {errors.address && <span className="text-[10px] text-destructive block">{errors.address}</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: EVENT DETAILS */}
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground block">Tanggal Acara Pernikahan</label>
+                      <input
+                        type="date"
+                        min={tomorrowDateString}
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        className={`w-full bg-muted/20 border rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                          errors.eventDate ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      {errors.eventDate && <span className="text-[10px] text-destructive block">{errors.eventDate}</span>}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground block">Jenis Acara</label>
+                      <select
+                        value={eventType}
+                        onChange={(e) => setEventType(e.target.value as Booking['eventType'])}
+                        className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      >
+                        <option value="akad">Akad Nikah / Pemberkatan</option>
+                        <option value="resepsi">Resepsi Pernikahan</option>
+                        <option value="prewedding">Foto Prewedding</option>
+                        <option value="lamaran">Prosesi Lamaran</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground block">Nama & Lokasi Gedung/Tempat Acara</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: Gedung Sasana Kriya, Ballroom Hotel Santika, atau Alamat Rumah"
+                        value={eventLocation}
+                        onChange={(e) => setEventLocation(e.target.value)}
+                        className={`w-full bg-muted/20 border rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
+                          errors.eventLocation ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      {errors.eventLocation && <span className="text-[10px] text-destructive block">{errors.eventLocation}</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: SERVICE CUSTOM SELECTION */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  {/* Option A: Packages All-in-One */}
+                  <div className="bg-secondary/10 border border-border/40 rounded-2xl p-4 space-y-4">
+                    <label className="flex items-center space-x-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={selectPackageActive}
+                        onChange={(e) => setSelectPackageActive(e.target.checked)}
+                        className="h-4.5 w-4.5 rounded border-border text-primary focus:ring-primary accent-primary"
+                      />
+                      <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                        Pilih Paket Wedding Lengkap (All-in-One)
+                      </span>
+                    </label>
+
+                    {selectPackageActive && (
+                      <div className="bg-background border border-border/40 p-4 rounded-xl space-y-2.5 text-xs animate-fade-in">
+                        <label className="font-semibold text-muted-foreground block">Pilih Paket Pernikahan:</label>
+                        <select
+                          value={selectedPackageId}
+                          onChange={(e) => setSelectedPackageId(e.target.value)}
+                          className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none"
+                        >
+                          {packages.map((pkg) => (
+                            <option key={pkg.id} value={pkg.id}>
+                              {pkg.name} - {formatPrice(pkg.price)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative py-2 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/60" /></div>
+                    <span className="relative px-3 bg-card text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Atau Kustomisasi Ala Carte</span>
+                  </div>
+
+                  {/* Option B: Ala Carte List */}
+                  <div className="space-y-4">
+                    {/* B1: Sewa Baju */}
+                    <div className="border border-border/40 rounded-2xl p-4 space-y-3 bg-muted/5">
+                      <label className="flex items-center space-x-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={selectDressActive}
+                          onChange={(e) => setSelectDressActive(e.target.checked)}
+                          className="h-4.5 w-4.5 rounded border-border text-primary focus:ring-primary accent-primary"
+                        />
+                        <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                          Sewa Baju & Busana Atelier
+                        </span>
+                      </label>
+
+                      {selectDressActive && (
+                        <div className="bg-background border border-border/40 p-4 rounded-xl space-y-3 text-xs grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in">
+                          <div className="sm:col-span-3">
+                            <label className="font-semibold text-muted-foreground block mb-1">Pilih Baju/Busana:</label>
+                            <select
+                              value={selectedDressId}
+                              onChange={(e) => setSelectedDressId(e.target.value)}
+                              className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none"
+                            >
+                              {dresses.map((d) => (
+                                <option key={d.id} value={d.id}>
+                                  {d.name} ({d.category}) - {formatPrice(d.price)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="font-semibold text-muted-foreground block mb-1">Ukuran:</label>
+                            <select
+                              value={selectedSize}
+                              onChange={(e) => setSelectedSize(e.target.value)}
+                              className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none"
+                            >
+                              {dresses.find((d) => d.id === selectedDressId)?.sizes.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="font-semibold text-muted-foreground block mb-1">Pilihan Warna:</label>
+                            <select
+                              value={selectedColor}
+                              onChange={(e) => setSelectedColor(e.target.value)}
+                              className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none"
+                            >
+                              {dresses.find((d) => d.id === selectedDressId)?.colors.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* B2: Makeup MUA */}
+                    <div className="border border-border/40 rounded-2xl p-4 space-y-3 bg-muted/5">
+                      <label className="flex items-center space-x-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={selectMakeupActive}
+                          onChange={(e) => setSelectMakeupActive(e.target.checked)}
+                          className="h-4.5 w-4.5 rounded border-border text-primary focus:ring-primary accent-primary"
+                        />
+                        <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                          Tata Rias Makeup Artist (MUA)
+                        </span>
+                      </label>
+
+                      {selectMakeupActive && (
+                        <div className="bg-background border border-border/40 p-4 rounded-xl space-y-2.5 text-xs animate-fade-in">
+                          <label className="font-semibold text-muted-foreground block mb-1">Pilih Paket Makeup:</label>
+                          <select
+                            value={selectedMakeupId}
+                            onChange={(e) => setSelectedMakeupId(e.target.value)}
+                            className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none"
+                          >
+                            {makeup.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} - {formatPrice(m.price)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* B3: Dekorasi Pelaminan */}
+                    <div className="border border-border/40 rounded-2xl p-4 space-y-3 bg-muted/5">
+                      <label className="flex items-center space-x-3 cursor-pointer group font-semibold text-foreground">
+                        <input
+                          type="checkbox"
+                          checked={isDecorSelectionActive}
+                          disabled={packageDecorations.length === 0}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            if (checked && !selectedDecor) {
+                              setSelectedDecorId(packageDecorations[0]?.id || '');
+                            }
+                            setSelectDecorActive(checked);
+                          }}
+                          className="h-4.5 w-4.5 rounded border-border text-primary focus:ring-primary accent-primary disabled:opacity-50"
+                        />
+                        <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                          Dekorasi Panggung Pelaminan
+                        </span>
+                      </label>
+
+                      {packageDecorations.length === 0 && (
+                        <p className="pl-7 text-[10px] text-muted-foreground">Belum ada tema dekorasi yang tersedia saat ini.</p>
+                      )}
+
+                      {isDecorSelectionActive && (
+                        <div className="bg-background border border-border/40 p-4 rounded-xl space-y-2.5 text-xs animate-fade-in">
+                          <label className="font-semibold text-muted-foreground block mb-1">Pilih Tema/Paket Dekorasi:</label>
+                          <select
+                            value={selectedDecorId}
+                            onChange={(e) => setSelectedDecorId(e.target.value)}
+                            className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none"
+                          >
+                            {packageDecorations.map((d) => (
+                              <option key={d.id} value={d.id}>
+                                {d.name} ({d.theme}) - Mulai {formatPrice(d.price)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4: REVIEW & PAYMENT SELECTION */}
+              {currentStep === 4 && (
+                <div className="space-y-6">
+                  {/* Confirmation lookup review */}
+                  <div className="bg-secondary/15 border border-border/40 rounded-2xl p-5 space-y-4">
+                    <h4 className="font-serif font-bold text-base text-foreground flex items-center gap-1.5">
+                      <Sparkles className="size-4.5 text-primary" /> Review Data Rencana Acara
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-muted-foreground border-b border-border/40 pb-4">
+                      <div>
+                        <span>Nama Pengantin:</span>
+                        <p className="font-bold text-foreground mt-0.5">{name}</p>
+                      </div>
+                      <div>
+                        <span>Nomor WhatsApp:</span>
+                        <p className="font-bold text-foreground mt-0.5">+{whatsapp}</p>
+                      </div>
+                      <div>
+                        <span>Tanggal Pernikahan:</span>
+                        <p className="font-bold text-foreground mt-0.5">{eventDate}</p>
+                      </div>
+                      <div>
+                        <span>Jenis & Tempat Acara:</span>
+                        <p className="font-bold text-foreground mt-0.5 uppercase">{eventType} - {eventLocation}</p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span>Alamat Pengiriman/Fitting:</span>
+                        <p className="font-bold text-foreground mt-0.5 leading-relaxed">{address}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <span className="font-semibold text-muted-foreground">Layanan Dipesan:</span>
+                      <ul className="list-disc pl-4 space-y-1 font-bold text-foreground">
+                        {calculations.packageSelected && <li>Paket Lengkap: {calculations.packageSelected.name}</li>}
+                        {calculations.dressesSelected.map((d) => (
+                          <li key={d.id}>Busana: {d.name} (Ukuran: {d.size}, Warna: {d.color})</li>
+                        ))}
+                        {calculations.makeupSelected && <li>Tata Rias: {calculations.makeupSelected.name}</li>}
+                        {calculations.decorSelected && <li>Dekorasi: {calculations.decorSelected.name}</li>}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground block">Catatan Tambahan (Kustomisasi/Permintaan Khusus)</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Contoh: Siger adat sunda, hijab styling tambahan, ukuran lingkar dada jas 104cm, dll..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="w-full bg-muted/20 border border-border rounded-xl py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                      />
+                    </div>
+
+                    {/* Payment Type */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-foreground block">Tipe Pembayaran:</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentType('dp')}
+                          className={`py-3 px-4 rounded-xl border text-center transition-all flex flex-col items-center cursor-pointer ${
+                            paymentType === 'dp'
+                              ? 'bg-primary/5 border-primary text-primary shadow-xs ring-1 ring-primary/20'
+                              : 'bg-background border-border text-foreground hover:border-primary/40'
+                          }`}
+                        >
+                          <span className="text-xs font-bold">Bayar DP Dulu ({selectPackageActive ? 'Tercantum' : `${settings.minDpPercent}%`})</span>
+                          <span className="text-[10px] text-muted-foreground mt-1">
+                            Minimal {formatPrice(calculations.minDp)} untuk kunci jadwal
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentType('full')}
+                          className={`py-3 px-4 rounded-xl border text-center transition-all flex flex-col items-center cursor-pointer ${
+                            paymentType === 'full'
+                              ? 'bg-primary/5 border-primary text-primary shadow-xs ring-1 ring-primary/20'
+                              : 'bg-background border-border text-foreground hover:border-primary/40'
+                          }`}
+                        >
+                          <span className="text-xs font-bold">Bayar Lunas</span>
+                          <span className="text-[10px] text-muted-foreground mt-1">
+                            Lunas {formatPrice(calculations.total)} sekarang juga
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Payment Method */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-foreground block">Metode Pembayaran:</label>
+                      {!settings.tfEnabled && !settings.qrisEnabled ? (
+                        <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-2">
+                          <Info className="size-4.5 text-amber-600 shrink-0" />
+                          <span>Metode pembayaran transfer belum dikonfigurasi admin. Harap hubungi via WA admin butik.</span>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {settings.tfEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => setPaymentMethod('tf')}
+                              className={`py-3 px-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
+                                paymentMethod === 'tf'
+                                  ? 'bg-primary/5 border-primary text-primary shadow-xs ring-1 ring-primary/20'
+                                  : 'bg-background border-border text-foreground hover:border-primary/40'
+                              }`}
+                            >
+                              <span className="text-xs font-bold">Transfer Bank</span>
+                              <span className="text-[10px] text-muted-foreground mt-0.5">{settings.tfBankName}</span>
+                            </button>
+                          )}
+                          {settings.qrisEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => setPaymentMethod('qris')}
+                              className={`py-3 px-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
+                                paymentMethod === 'qris'
+                                  ? 'bg-primary/5 border-primary text-primary shadow-xs ring-1 ring-primary/20'
+                                  : 'bg-background border-border text-foreground hover:border-primary/40'
+                              }`}
+                            >
+                              <span className="text-xs font-bold">QRIS Code</span>
+                              <span className="text-[10px] text-muted-foreground mt-0.5">E-Wallet & M-Banking</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {errors.paymentMethod && (
+                        <span className="text-[10px] text-destructive block mt-1">{errors.paymentMethod}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </CardContent>
+            <CardFooter className="border-t bg-secondary/10 flex justify-between p-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handlePrevStep}
+                disabled={currentStep === 1}
+                className="text-xs"
+              >
+                <ChevronLeft className="size-4 mr-1" /> Kembali
+              </Button>
+
+              {currentStep < 4 ? (
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="text-xs"
+                >
+                  Lanjutkan <ChevronRight className="size-4 ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs uppercase tracking-wider font-bold h-9"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5" />
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="size-4 mr-1.5" />
+                      Konfirmasi & Booking
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
         </div>
 
-      </form>
+        {/* RIGHT COLUMN: Bill Summary Sidebar */}
+        <div className="lg:col-span-4">
+          <Card className="border-border/60 shadow-lg lg:sticky lg:top-24">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="font-serif text-base">Ringkasan Pemesanan</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              {/* List selected items */}
+              <div className="space-y-3.5 divide-y divide-border/40 max-h-60 overflow-y-auto pr-1">
+                {!selectDressActive && !selectMakeupActive && !isDecorSelectionActive && !selectPackageActive && (
+                  <p className="text-muted-foreground/60 italic py-4 text-center text-xs">Belum ada layanan yang dipilih.</p>
+                )}
+
+                {/* Package */}
+                {selectPackageActive && (
+                  <div className="pt-3 first:pt-0">
+                    <div className="flex justify-between font-bold text-foreground text-xs">
+                      <span>{packages.find((p) => p.id === selectedPackageId)?.name}</span>
+                      <span>{formatPrice(packages.find((p) => p.id === selectedPackageId)?.price || 0)}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground block mt-0.5">Paket All-in-One</span>
+                  </div>
+                )}
+
+                {/* Dress */}
+                {selectDressActive && (
+                  <div className="pt-3 first:pt-0">
+                    <div className="flex justify-between font-bold text-foreground text-xs">
+                      <span>Gaun: {dresses.find((d) => d.id === selectedDressId)?.name}</span>
+                      <span>{formatPrice(dresses.find((d) => d.id === selectedDressId)?.price || 0)}</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5 space-x-2">
+                      <span>Ukuran: {selectedSize}</span>
+                      <span>•</span>
+                      <span>Warna: {selectedColor}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Makeup */}
+                {selectMakeupActive && (
+                  <div className="pt-3 first:pt-0">
+                    <div className="flex justify-between font-bold text-foreground text-xs">
+                      <span>{makeup.find((m) => m.id === selectedMakeupId)?.name}</span>
+                      <span>{formatPrice(makeup.find((m) => m.id === selectedMakeupId)?.price || 0)}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground block mt-0.5">Rias Pengantin MUA</span>
+                  </div>
+                )}
+
+                {/* Decor */}
+                {isDecorSelectionActive && (
+                  <div className="pt-3 first:pt-0">
+                    <div className="flex justify-between font-bold text-foreground text-xs">
+                      <span>{packageDecorations.find((d) => d.id === selectedDecorId)?.name}</span>
+                      <span>{formatPrice(packageDecorations.find((d) => d.id === selectedDecorId)?.price || 0)}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground block mt-0.5">Dekorasi Pelaminan</span>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Subtotal & Fees */}
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Subtotal Layanan:</span>
+                  <span className="font-medium text-foreground">{formatPrice(calculations.subtotal)}</span>
+                </div>
+                {calculations.subtotal > 0 && (
+                  <div className="flex justify-between">
+                    <span>Biaya Pengantaran/Transport:</span>
+                    <span className="font-medium text-foreground">{formatPrice(calculations.transportFee)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-bold text-foreground border-t border-dashed border-border/40 pt-2">
+                  <span>Total Biaya:</span>
+                  <span className="text-primary">{formatPrice(calculations.total)}</span>
+                </div>
+              </div>
+
+              {/* DP Alert info Box */}
+              <div className="bg-muted/40 border border-border/40 p-3.5 rounded-2xl space-y-2 text-[11px] text-muted-foreground leading-normal">
+                <div className="flex justify-between font-semibold">
+                  <span>Tipe Bayar:</span>
+                  <span className="text-foreground uppercase">{paymentType === 'dp' ? 'Uang Muka (DP)' : 'Lunas'}</span>
+                </div>
+                <div className="flex justify-between font-extrabold text-foreground text-xs border-t border-dashed border-border/40 pt-1.5 mt-1">
+                  <span>Jumlah Tagihan:</span>
+                  <span className="text-emerald-700">
+                    {formatPrice(paymentType === 'dp' ? calculations.minDp : calculations.total)}
+                  </span>
+                </div>
+                {paymentType === 'dp' && (
+                  <p className="text-[9px] text-muted-foreground/80 leading-normal italic pt-1 border-t border-border/20 mt-1">
+                    *Sisa pelunasan dibayar selambat-lambatnya H-7 sebelum hari pelaksanaan acara.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="justify-center border-t py-4 text-[10px] text-muted-foreground flex gap-1.5 items-center">
+              <ShieldCheck className="size-4 text-primary shrink-0" />
+              <span>Transaksi terenkripsi aman & bergaransi</span>
+            </CardFooter>
+          </Card>
+        </div>
+
+      </div>
     </div>
   );
 }
@@ -807,7 +1029,7 @@ function BookingFormContent() {
 export default function BookingForm() {
   return (
     <Suspense fallback={
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center text-xs text-stone-500">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center text-xs text-muted-foreground">
         Loading parameter booking...
       </div>
     }>

@@ -1,22 +1,42 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import {
-  Calendar,
-  Sparkles,
-  Star,
-  ShieldCheck,
-  Check,
-  Plus,
-  Minus,
-  ArrowRight,
-  Heart
-} from 'lucide-react';
-import { useDresses, usePackages, useGallery, useTestimonials, useSettings } from '@/data/db';
+import Image from 'next/image';
+import { ArrowRight, Check, MessageCircle, Star } from 'lucide-react';
+import { useDresses, useGallery, usePackages, useSettings, useTestimonials } from '@/data/db';
 import DressCard from '@/components/DressCard';
 import PackageCard from '@/components/PackageCard';
 import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+const bookingSteps = [
+  ['01', 'Mulai dari kebutuhan', 'Pilih busana, makeup, dekorasi, atau paket yang paling sesuai dengan acara Anda.'],
+  ['02', 'Konsultasi langsung', 'Tim kami membantu menyelaraskan ukuran, palet warna, lokasi acara, dan anggaran.'],
+  ['03', 'Fitting dan konfirmasi', 'Jadwal dikunci setelah fitting atau konsultasi teknis dan pembayaran uang muka.'],
+  ['04', 'Hari acara', 'Setiap detail disiapkan sesuai catatan final yang telah disepakati bersama.'],
+];
+
+const faqs = [
+  {
+    q: 'Berapa lama masa sewa busana?',
+    a: 'Masa sewa standar adalah tiga hari: pengambilan atau fitting akhir, hari acara, dan pengembalian. Perpanjangan dapat dibicarakan sebelum tanggal acara.',
+  },
+  {
+    q: 'Apakah bisa memesan layanan secara terpisah?',
+    a: 'Bisa. Anda dapat memesan busana, makeup, atau dekorasi saja. Paket lengkap tersedia jika Anda ingin koordinasi yang lebih ringkas.',
+  },
+  {
+    q: 'Bagaimana perhitungan biaya transportasi?',
+    a: 'Biaya transportasi mengikuti lokasi acara dan kebutuhan tim. Nilai final disampaikan sebelum Anda membayar uang muka.',
+  },
+  {
+    q: 'Kapan sebaiknya melakukan booking?',
+    a: 'Idealnya tiga sampai enam bulan sebelum acara, terutama untuk tanggal populer. Untuk kebutuhan mendadak, hubungi kami agar ketersediaan dapat dicek langsung.',
+  },
+];
 
 export default function Home() {
   const [dresses] = useDresses();
@@ -25,384 +45,231 @@ export default function Home() {
   const [testimonials] = useTestimonials();
   const [settings] = useSettings();
 
-  // FAQ toggle state
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-
-
   const services = [
     {
-      title: 'Sewa Baju & Busana',
-      description: 'Baju pernikahan mewah bernuansa modern, kebaya prada adat, baju adat tradisional, hingga jas formal dengan jaminan fitting sempurna.',
+      number: '01',
+      title: 'Busana pengantin',
+      description: 'Kebaya, busana adat, gaun modern, dan setelan pria yang dipilih berdasarkan bentuk tubuh serta karakter acara.',
       href: '/dresses',
-      img: dresses.find((dress) => dress.images[0])?.images[0] || '',
+      image: settings.serviceDressImage,
     },
     {
-      title: 'Jasa Makeup Pengantin',
-      description: 'Riasan wajah flawless dan berkilau yang disesuaikan dengan gaun Anda, dijamin tahan lama sepanjang hari oleh MUA profesional kami.',
+      number: '02',
+      title: 'Makeup',
+      description: 'Rias pengantin yang dirancang melalui konsultasi look, karakter wajah, pencahayaan, dan durasi acara.',
       href: '/makeup',
-      img: gallery.find((item) => item.category === 'makeup' && item.image)?.image || '',
+      image: settings.serviceMakeupImage,
     },
     {
-      title: 'Dekorasi Pelaminan',
-      description: 'Dekorasi ballroom megah, konsep rustic outdoor romantis, hingga pelaminan adat sakral yang didesain presisi sesuai venue Anda.',
+      number: '03',
+      title: 'Dekorasi',
+      description: 'Konsep ruang yang proporsional terhadap lokasi acara, palet warna, dan kebutuhan dokumentasi.',
       href: '/decor',
-      img: gallery.find((item) => item.category === 'decor' && item.image)?.image || '',
+      image: settings.serviceDecorImage,
     },
   ];
 
-  const bookingSteps = [
-    {
-      step: '01',
-      title: 'Pilih Layanan & Tanggal',
-      description: 'Temukan gaun favorit, paket makeup, atau dekorasi impian Anda lalu tentukan tanggal hari pernikahan Anda.'
-    },
-    {
-      step: '02',
-      title: 'Konsultasi & Fitting',
-      description: 'Diskusikan konsep dengan tim kami via WhatsApp dan jadwalkan sesi fitting gratis untuk penyesuaian ukuran gaun.'
-    },
-    {
-      step: '03',
-      title: 'Bayar DP Aman',
-      description: 'Amankan jadwal Anda dengan membayar uang muka (DP) minimal 30% melalui gerbang pembayaran instan kami.'
-    },
-    {
-      step: '04',
-      title: 'Hari Bahagia Anda',
-      description: 'Semua detail disiapkan tepat waktu. Gaun diantar rapi, MUA datang pagi, dan dekorasi terpasang kokoh sempurna.'
-    }
-  ];
-
-  const faqs = [
-    {
-      q: 'Bagaimana sistem sewa baju dan busana di Elika?',
-      a: 'Sewa baju/busana berdurasi 3 hari (hari pertama fitting akhir/pengambilan, hari kedua acara pernikahan, hari ketiga pengembalian). Kami juga melayani perpanjangan durasi sewa dengan konfirmasi sebelumnya.'
-    },
-    {
-      q: 'Apakah harga paket sudah termasuk biaya transportasi?',
-      a: 'Untuk Paket Standard (Gold), Paket Premium, dan Paket Luxury, biaya transportasi MUA dan tim dekorasi sudah gratis untuk seluruh wilayah Jabodetabek. Di luar wilayah tersebut, ada biaya transport penyesuaian.'
-    },
-    {
-      q: 'Apakah bisa memesan sewa baju saja atau makeup saja?',
-      a: 'Tentu bisa! Kami menyediakan layanan terpisah (ala carte) baik sewa baju/busana di katalog /dresses, paket makeup di /makeup, maupun dekorasi di /decor. Anda bebas memadukan sesuai kebutuhan.'
-    },
-    {
-      q: 'Bagaimana jika baju/busana yang saya sewa mengalami kerusakan kecil?',
-      a: 'Kerusakan kecil akibat pemakaian wajar (seperti kancing lepas atau noda kosmetik ringan) ditanggung oleh uang jaminan (deposit) yang dikembalikan setelah baju/busana diperiksa. Untuk kerusakan fatal/sobek parah, akan dikenakan denda sesuai syarat sewa.'
-    }
-  ];
-
-  const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
-
+  const featuredDresses = dresses.filter((dress) => dress.isPopular).slice(0, 3);
   return (
-    <div className="space-y-24 pb-20">
-      
-      {/* 1. HERO SECTION */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-20">
-        <div className="absolute inset-0 z-0">
-          {settings.heroImage ? (
-            <img
-              src={settings.heroImage}
-              alt="Pernikahan Indonesia"
-              className="w-full h-full object-cover brightness-[0.65]"
-            />
-          ) : (
-            <ImagePlaceholder label="Hero belum diatur" className="brightness-[0.65]" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-charcoal/80 via-charcoal/50 to-transparent" />
-        </div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left py-32 text-white">
-          <div className="max-w-2xl space-y-6 animate-fade-in">
-            <div className="inline-flex items-center space-x-2 bg-gold/25 border border-gold/40 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase text-gold-light">
-              <Sparkles className="h-4 w-4 text-gold-light" />
-              <span>Premium Wedding Atelier & Organizer</span>
+    <div className="pb-24">
+      <section className="border-b bg-secondary/35">
+        <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-7xl lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="flex items-center px-6 py-20 sm:px-10 lg:px-12">
+            <div className="max-w-xl space-y-8">
+              <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <span className="h-px w-8 bg-accent" />
+                Busana · Rias · Dekorasi
+              </div>
+              <h1 className="font-heading text-5xl leading-[0.98] tracking-[-0.035em] sm:text-6xl lg:text-7xl">
+                Satu visi untuk hari pernikahan yang terasa milik Anda.
+              </h1>
+              <p className="max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
+                Ceritakan rencana Anda. Kami menyelaraskan busana, rias, dan dekorasi agar hari pernikahan terasa utuh, personal, dan tetap tenang.
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button asChild size="lg" className="h-11 px-6">
+                  <Link href="/booking">Mulai konsultasi <ArrowRight /></Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="h-11 px-6">
+                  <Link href="/dresses">Jelajahi koleksi</Link>
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-6 border-t pt-6 text-sm text-muted-foreground">
+                <p><span className="block font-medium text-foreground">Semua dalam satu tim</span>Busana, rias, dan dekorasi.</p>
+                <p><span className="block font-medium text-foreground">Dimulai dari cerita Anda</span>Bukan paket seragam.</p>
+              </div>
             </div>
-            
-            <h1 className="text-4xl md:text-6xl font-serif font-bold leading-tight">
-              Wujudkan Hari Pernikahan Impian Anda Yang Elegan
-            </h1>
-            
-            <p className="text-stone-200 text-lg leading-relaxed font-light">
-              Satu tempat terbaik untuk menyewa baju dan busana pengantin mewah, riasan wajah menawan dari MUA profesional, dan dekorasi pernikahan megah.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
-              <Link
-                href="/booking"
-                className="px-8 py-3.5 bg-gold hover:bg-gold-dark text-white rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 shadow-lg text-center"
-              >
-                Booking Sekarang
-              </Link>
-              <Link
-                href="/dresses"
-                className="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 backdrop-blur-sm text-center"
-              >
-                Lihat Katalog Baju
-              </Link>
+          </div>
+
+          <div className="relative min-h-[55svh] overflow-hidden border-l bg-muted lg:min-h-full">
+            {settings.heroImage ? (
+              <Image src={settings.heroImage} alt="Karya pernikahan Ermi Pengantin" fill preload sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+            ) : (
+              <ImagePlaceholder label="Foto hero belum diatur" />
+            )}
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/65 to-transparent p-6 pt-24 text-white sm:p-8">
+              <p className="max-w-xs text-sm leading-6 text-white/80">Setiap pilihan dibangun dari konteks acara, bukan dari template yang sama.</p>
+              <span className="font-heading text-3xl italic">Ermi</span>
             </div>
           </div>
         </div>
       </section>
 
-
-
-      {/* 3. CORE SERVICES */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs uppercase tracking-widest text-gold-dark font-bold">Layanan Utama Kami</span>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Sentuhan Premium Untuk Hari Bahagia</h2>
-          <p className="text-sm text-stone-muted leading-relaxed">
-            Kami mengintegrasikan gaun pengantin haute couture, MUA tersertifikasi, dan dekorator berpengalaman untuk memastikan keharmonisan visual hari pernikahan Anda.
+      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mb-12 grid gap-6 md:grid-cols-[0.7fr_1.3fr] md:items-end">
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Layanan Ermi Pengantin</p>
+            <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">Dikerjakan sebagai satu kesatuan.</h2>
+          </div>
+          <p className="max-w-xl text-base leading-7 text-muted-foreground md:justify-self-end">
+            Bukan sekadar menggabungkan vendor. Kami menjaga agar busana, wajah, dan ruang berbicara dalam bahasa visual yang sama.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((svc, i) => (
-            <div key={i} className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gold-light/20 flex flex-col group">
-              <div className="relative h-64 overflow-hidden">
-                {svc.img ? (
-                  <img
-                    src={svc.img}
-                    alt={svc.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+        <div className="grid border-y md:grid-cols-3">
+          {services.map((service) => (
+            <article key={service.href} className="group border-b py-6 md:border-b-0 md:px-6 md:first:pl-0 md:last:pr-0 md:not-last:border-r">
+              <div className="relative mb-6 aspect-[4/3] overflow-hidden bg-muted">
+                {service.image ? (
+                  <Image src={service.image} alt={service.title} fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
                 ) : (
                   <ImagePlaceholder label="Belum ada foto" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 to-transparent" />
               </div>
-              <div className="p-6 space-y-4 flex flex-col flex-grow">
-                <h3 className="font-serif font-bold text-xl text-charcoal">{svc.title}</h3>
-                <p className="text-xs text-stone-600 leading-relaxed flex-grow">{svc.description}</p>
-                <Link
-                  href={svc.href}
-                  className="inline-flex items-center text-xs font-bold text-gold-dark hover:text-gold-deep transition-colors pt-2 gap-1 group-hover:translate-x-1 duration-200"
-                >
-                  <span>Selengkapnya</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+              <div className="mb-3 flex items-baseline justify-between">
+                <h3 className="font-heading text-2xl">{service.title}</h3>
+                <span className="font-mono text-xs text-muted-foreground">{service.number}</span>
               </div>
-            </div>
+              <p className="mb-5 min-h-20 text-sm leading-6 text-muted-foreground">{service.description}</p>
+              <Button asChild variant="link" className="h-auto p-0 text-foreground">
+                <Link href={service.href}>Pelajari layanan <ArrowRight /></Link>
+              </Button>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* 4. FEATURED DRESSES */}
-      <section className="bg-ivory py-16 border-y border-gold-light/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-4">
-            <div className="space-y-2 text-center md:text-left max-w-lg">
-              <span className="text-xs uppercase tracking-widest text-gold-dark font-bold">Koleksi Terpopuler</span>
-              <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Katalog Baju & Busana Unggulan</h2>
+      {featuredDresses.length > 0 && (
+        <section className="border-y bg-card py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pilihan atelier</p>
+                <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">Busana yang layak dicoba langsung.</h2>
+              </div>
+              <Button asChild variant="outline"><Link href="/dresses">Seluruh koleksi ({dresses.length})</Link></Button>
             </div>
-            <Link
-              href="/dresses"
-              className="inline-flex items-center px-6 py-2.5 bg-gold/10 hover:bg-gold/20 text-gold-dark rounded-full text-xs font-bold uppercase tracking-wider transition-colors"
-            >
-              Lihat Semua Baju ({dresses.length})
-            </Link>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredDresses.map((dress) => <DressCard key={dress.id} dress={dress} />)}
+            </div>
           </div>
+        </section>
+      )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {dresses.filter(d => d.isPopular).slice(0, 3).map((dress) => (
-              <DressCard key={dress.id} dress={dress} />
-            ))}
+      {packages.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+          <div className="mb-12 max-w-2xl">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Paket terintegrasi</p>
+            <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">Lebih sedikit koordinasi, lebih banyak kepastian.</h2>
+            <p className="mt-5 text-base leading-7 text-muted-foreground">Pilih paket sebagai titik awal. Detail tetap dapat disesuaikan setelah konsultasi.</p>
           </div>
-        </div>
-      </section>
-
-      {/* 5. POPULAR PACKAGES */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs uppercase tracking-widest text-gold-dark font-bold font-semibold">Solusi Hemat & Praktis</span>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Paket Pernikahan All-In-One Terpopuler</h2>
-          <p className="text-sm text-stone-muted leading-relaxed">
-            Pilihan paket pernikahan terintegrasi lengkap dengan gaun, makeup keluarga, dan dekorasi panggung pelaminan mewah untuk menghemat waktu serta anggaran Anda.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {packages.map((pkg) => (
-            <PackageCard key={pkg.id} pkg={pkg} />
-          ))}
-        </div>
-      </section>
-
-      {/* 6. PORTFOLIO SHOWCASE */}
-      <section className="bg-charcoal text-ivory-light py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs uppercase tracking-widest text-gold font-bold">Galeri Inspirasi</span>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white">Hasil Portofolio Nyata Kami</h2>
-            <p className="text-stone-400 text-sm leading-relaxed">
-              Lihat dokumentasi hasil tata rias pengantin dan dekorasi dekorasi megah di berbagai venue pernikahan asli di Indonesia.
-            </p>
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {packages.slice(0, 3).map((pkg) => <PackageCard key={pkg.id} pkg={pkg} />)}
           </div>
+        </section>
+      )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {gallery.slice(0, 6).map((item) => (
-              <div key={item.id} className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer shadow-lg">
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <ImagePlaceholder label="Foto kosong" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6" />
-                <div className="absolute inset-x-6 bottom-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100 text-white z-10">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-gold block mb-1">
-                    {item.category === 'makeup' ? 'Rias Wajah (MUA)' : item.category === 'decor' ? 'Dekorasi Pelaminan' : 'Katalog Atelier'}
-                  </span>
-                  <h4 className="font-serif font-bold text-lg">{item.title}</h4>
-                  {item.description && <p className="text-xs text-stone-300 mt-1">{item.description}</p>}
-                </div>
+      {gallery.length > 0 && (
+        <section className="bg-primary py-24 text-primary-foreground">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 grid gap-4 md:grid-cols-2 md:items-end">
+              <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">Catatan visual dari karya kami.</h2>
+              <p className="max-w-md text-sm leading-6 text-primary-foreground/65 md:justify-self-end">Dokumentasi busana, rias, dan tata ruang yang telah diwujudkan bersama klien Ermi Pengantin.</p>
+            </div>
+            <div className="grid auto-rows-[220px] gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {gallery.slice(0, 5).map((item, index) => (
+                <figure key={item.id} className={`group relative overflow-hidden bg-white/5 ${index === 0 ? 'sm:row-span-2 lg:col-span-2' : ''}`}>
+                  {item.image ? <Image src={item.image} alt={item.title} fill sizes="(min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw" className="object-cover opacity-90 transition duration-500 group-hover:opacity-100" /> : <ImagePlaceholder label="Foto kosong" />}
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 pt-16">
+                    <p className="text-xs uppercase tracking-[0.16em] text-white/60">{item.category}</p>
+                    <p className="mt-1 font-heading text-xl text-white">{item.title}</p>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cara bekerja</p>
+            <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">Proses yang jelas sejak awal.</h2>
+          </div>
+          <div className="border-t">
+            {bookingSteps.map(([number, title, description]) => (
+              <div key={number} className="grid gap-3 border-b py-6 sm:grid-cols-[48px_180px_1fr] sm:items-start">
+                <span className="font-mono text-xs text-muted-foreground">{number}</span>
+                <h3 className="font-medium">{title}</h3>
+                <p className="text-sm leading-6 text-muted-foreground">{description}</p>
               </div>
             ))}
           </div>
-
-          <div className="text-center pt-4">
-            <Link
-              href="/decor"
-              className="inline-flex items-center px-8 py-3 border border-gold hover:bg-gold/15 text-gold font-bold uppercase tracking-wider rounded-full transition-all duration-300 text-sm"
-            >
-              Lihat Portofolio Dekorasi
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* 7. HOW IT WORKS (CARA BOOKING) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs uppercase tracking-widest text-gold-dark font-bold">Langkah Pemesanan</span>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Bagaimana Alur Melakukan Booking?</h2>
-          <p className="text-sm text-stone-muted">
-            Proses pemesanan layanan pernikahan di Elika dirancang sesederhana dan senyaman mungkin untuk kesibukan Anda.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {bookingSteps.map((step, idx) => (
-            <div key={idx} className="relative bg-white p-8 rounded-3xl border border-gold-light/20 shadow-md flex flex-col space-y-4">
-              <span className="text-5xl font-serif font-extrabold text-gold-light">{step.step}</span>
-              <h3 className="font-serif font-bold text-lg text-charcoal leading-tight">{step.title}</h3>
-              <p className="text-xs text-stone-600 leading-relaxed">{step.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 8. TESTIMONIALS */}
-      <section className="bg-ivory py-20 border-y border-gold-light/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs uppercase tracking-widest text-gold-dark font-bold font-semibold">Testimoni Klien</span>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-charcoal">Kisah Bahagia Pasangan Elika</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((test) => (
-              <div key={test.id} className="bg-white p-8 rounded-3xl shadow-md border border-gold-light/10 flex flex-col justify-between space-y-6">
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: test.rating }).map((_, i) => (
-                    <Star key={i} className="h-4.5 w-4.5 fill-gold text-gold" />
-                  ))}
-                </div>
-                <p className="text-stone-600 text-xs leading-relaxed font-light flex-grow">
-                  "{test.comment}"
-                </p>
-                <div className="flex items-center space-x-3 pt-4 border-t border-gold-light/10">
-                  {test.avatar ? (
-                    <img
-                      src={test.avatar}
-                      alt={test.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-[10px] font-bold text-stone-400">
-                      {test.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="font-bold text-xs text-charcoal">{test.name}</h4>
-                    <p className="text-[10px] text-stone-muted">{test.role}</p>
+      {testimonials.length > 0 && (
+        <section className="border-y bg-secondary/40 py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="mb-10 max-w-xl font-heading text-4xl tracking-tight">Yang dirasakan klien setelah semuanya selesai.</h2>
+            <div className="grid gap-8 md:grid-cols-3">
+              {testimonials.slice(0, 3).map((testimonial) => (
+                <blockquote key={testimonial.id} className="border-t border-foreground/20 pt-6">
+                  <div className="mb-5 flex gap-1" aria-label={`${testimonial.rating} dari 5 bintang`}>
+                    {Array.from({ length: testimonial.rating }).map((_, index) => <Star key={index} className="size-3.5 fill-accent text-accent" />)}
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 9. FAQ SECTION */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        <div className="text-center space-y-3">
-          <span className="text-xs uppercase tracking-widest text-gold-dark font-bold font-semibold">Tanya Jawab</span>
-          <h2 className="text-3xl font-serif font-bold text-charcoal">Pertanyaan Sering Diajukan (FAQ)</h2>
-        </div>
-
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => {
-            const isOpen = openFaq === idx;
-            return (
-              <div key={idx} className="bg-white border border-gold-light/25 rounded-2xl overflow-hidden shadow-sm">
-                <button
-                  onClick={() => toggleFaq(idx)}
-                  className="w-full px-6 py-4 flex justify-between items-center text-left hover:bg-ivory-light transition-colors"
-                >
-                  <span className="font-serif font-semibold text-sm text-charcoal">{faq.q}</span>
-                  {isOpen ? <Minus className="h-4 w-4 text-gold-dark" /> : <Plus className="h-4 w-4 text-gold-dark" />}
-                </button>
-                {isOpen && (
-                  <div className="px-6 pb-5 text-xs text-stone-600 leading-relaxed border-t border-gold-light/10 pt-3">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 10. CLOSING CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-charcoal rounded-3xl relative overflow-hidden text-center text-white py-16 px-8 shadow-2xl glass-dark">
-          <div className="absolute inset-0 bg-gradient-to-tr from-gold-deep/20 via-transparent to-transparent -z-10" />
-          <div className="max-w-xl mx-auto space-y-6 flex flex-col items-center">
-            <Heart className="h-10 w-10 text-gold fill-gold animate-pulse" />
-            <h2 className="text-3xl md:text-4xl font-serif font-bold leading-tight">
-              Konsultasikan Pernikahan Impian Anda Hari Ini
-            </h2>
-            <p className="text-stone-300 text-xs md:text-sm font-light leading-relaxed">
-              Jadwalkan janji temu fitting baju secara eksklusif atau tanyakan detail kustomisasi paket dekorasi. Admin kami siap melayani Anda sepenuh hati.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Link
-                href="/booking"
-                className="px-8 py-3 bg-gold hover:bg-gold-dark text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-md"
-              >
-                Booking Sekarang
-              </Link>
-              <a
-                href={`https://wa.me/${settings.whatsappAdmin}?text=Halo%20Elika%20Wedding%2C%20saya%20tertarik%20untuk%20konsultasi%20paket%20wedding.`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-8 py-3 border border-stone-500 hover:border-gold hover:text-gold text-white rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300"
-              >
-                Tanya via WhatsApp
-              </a>
+                  <p className="font-heading text-xl leading-8">“{testimonial.comment}”</p>
+                  <footer className="mt-6 text-sm text-muted-foreground"><span className="font-medium text-foreground">{testimonial.name}</span> · {testimonial.role}</footer>
+                </blockquote>
+              ))}
             </div>
           </div>
+        </section>
+      )}
+
+      <section className="mx-auto grid max-w-7xl gap-12 px-4 py-24 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
+        <div>
+          <Badge variant="outline" className="mb-5">Pertanyaan umum</Badge>
+          <h2 className="font-heading text-4xl tracking-tight">Hal yang biasanya ditanyakan sebelum mulai.</h2>
         </div>
+        <Accordion type="single" collapsible className="border-t">
+          {faqs.map((faq, index) => (
+            <AccordionItem key={faq.q} value={`faq-${index}`}>
+              <AccordionTrigger className="py-5 text-base hover:no-underline">{faq.q}</AccordionTrigger>
+              <AccordionContent className="max-w-2xl pb-5 leading-6 text-muted-foreground">{faq.a}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Card className="border-0 bg-primary py-0 text-primary-foreground ring-0">
+          <CardContent className="grid gap-8 px-6 py-12 sm:px-10 lg:grid-cols-[1fr_auto] lg:items-end lg:px-14 lg:py-16">
+            <div className="max-w-2xl">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground/55">Mulai percakapan</p>
+              <h2 className="font-heading text-4xl tracking-tight sm:text-5xl">Bawa referensi Anda. Kami bantu menyusun sisanya.</h2>
+              <div className="mt-6 flex items-start gap-2 text-sm leading-6 text-primary-foreground/65"><Check className="mt-1 size-4 shrink-0" /> Konsultasi awal membantu menentukan layanan dan kisaran anggaran yang relevan.</div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90"><Link href="/booking">Buat janji <ArrowRight /></Link></Button>
+              <Button asChild variant="outline" size="lg" className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                <a href={`https://wa.me/${settings.whatsappAdmin}?text=Halo%20Ermi%20Pengantin%2C%20saya%20ingin%20berkonsultasi.`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
