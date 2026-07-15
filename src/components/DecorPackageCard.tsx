@@ -1,102 +1,57 @@
 'use client';
 
 import Link from 'next/link';
-import { Check, Map } from 'lucide-react';
+import Image from 'next/image';
+import { Check, MessageCircle } from 'lucide-react';
 import { DecorPackage } from '@/types';
 import { useSettings } from '@/data/db';
 import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
-interface DecorPackageCardProps {
-  pkg: DecorPackage;
-}
+interface DecorPackageCardProps { pkg: DecorPackage }
+
+const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
 
 export default function DecorPackageCard({ pkg }: DecorPackageCardProps) {
   const [settings] = useSettings();
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const handleWhatsAppConsult = () => {
-    const text = encodeURIComponent(`Halo Elika Wedding, saya ingin berkonsultasi mengenai Paket Dekorasi "${pkg.name}" (${pkg.theme}) seharga ${formatPrice(pkg.price)}.`);
-    window.open(`https://wa.me/${settings.whatsappAdmin}?text=${text}`, '_blank');
-  };
+  const whatsappMessage = pkg.decorType === 'item'
+    ? `Halo Ermi Pengantin, saya ingin bertanya dan memesan item dekorasi "${pkg.name}".`
+    : `Halo Ermi Pengantin, saya ingin berkonsultasi mengenai paket dekorasi "${pkg.name}".`;
+  const whatsappUrl = `https://wa.me/${settings.whatsappAdmin}?text=${encodeURIComponent(whatsappMessage)}`;
+  const typeLabel = pkg.decorType === 'package' ? 'Paket Dekorasi' : 'Item Dekorasi';
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gold-light/20 flex flex-col h-full">
-      {/* Background Image / Banner */}
-      <div className="relative h-56 bg-stone-100 overflow-hidden">
-        {pkg.images[0] ? (
-          <img
-            src={pkg.images[0]}
-            alt={pkg.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <ImagePlaceholder label="Foto dekor kosong" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/20 to-transparent" />
-        <div className="absolute top-4 right-4 bg-gold text-white text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full">
-          Tema: {pkg.theme}
+    <Card className="h-full gap-0 py-0 ring-foreground/10">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+        {pkg.images[0] ? <Image src={pkg.images[0]} alt={pkg.name} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" /> : <ImagePlaceholder label="Foto dekorasi kosong" />}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+          <Badge className="bg-foreground text-background">{typeLabel}</Badge>
+          <Badge className="bg-background/90 text-foreground backdrop-blur-sm">{pkg.theme}</Badge>
         </div>
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-white font-serif font-bold text-xl leading-tight">
-            {pkg.name}
-          </h3>
-          <div className="flex items-center text-stone-200 text-xs mt-1 gap-1">
-            <Map className="h-3 w-3 text-gold" />
-            <span>Kapasitas: {pkg.venueSize}</span>
+      </div>
+      <CardContent className="flex flex-1 flex-col p-6">
+        <h3 className="font-heading text-2xl">{pkg.name}</h3>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">{pkg.description}</p>
+        <div className="mt-5">
+          <p className="text-xs text-muted-foreground">Mulai dari</p>
+          <p className="text-xl font-semibold">{formatPrice(pkg.price)}</p>
+        </div>
+        <ul className="my-6 space-y-2.5 border-t pt-5">
+          {pkg.features.map((feature, index) => <li key={`${pkg.id}-${index}`} className="flex gap-2 text-sm text-muted-foreground"><Check className="mt-0.5 size-4 shrink-0 text-foreground" />{feature}</li>)}
+        </ul>
+        {pkg.decorType === 'package' ? (
+          <div className="mt-auto grid grid-cols-2 gap-2">
+            <Button asChild variant="outline"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Konsultasi</a></Button>
+            <Button asChild><Link href={`/booking?decorId=${pkg.id}`}>Booking</Link></Button>
           </div>
-        </div>
-      </div>
-
-      {/* Info Body */}
-      <div className="p-6 flex flex-col flex-grow">
-        <p className="text-stone-muted text-sm leading-relaxed mb-4">
-          {pkg.description}
-        </p>
-
-        {/* Pricing */}
-        <div className="mb-4">
-          <span className="text-xs text-stone-500 block">Harga Mulai Dari</span>
-          <span className="text-2xl font-extrabold text-gold-dark">
-            {formatPrice(pkg.price)}
-          </span>
-        </div>
-
-        {/* Features Inclusions */}
-        <div className="mb-6 flex-grow">
-          <span className="text-xs font-semibold uppercase tracking-wider text-charcoal block mb-3">Item Dekorasi Termasuk:</span>
-          <ul className="space-y-2">
-            {pkg.features.map((feature, i) => (
-              <li key={i} className="flex items-start text-xs text-stone-600 gap-2">
-                <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-gold-light/10">
-          <button
-            onClick={handleWhatsAppConsult}
-            className="py-2.5 text-center text-xs font-semibold border border-gold text-gold-dark hover:bg-gold-light/10 rounded-xl transition-all duration-300"
-          >
-            Konsultasi Tema
-          </button>
-          <Link
-            href={`/booking?decorId=${pkg.id}`}
-            className="py-2.5 text-center text-xs font-semibold bg-gold hover:bg-gold-dark text-white rounded-xl transition-all duration-300 shadow-sm"
-          >
-            Booking Dekor
-          </Link>
-        </div>
-      </div>
-    </div>
+        ) : (
+          <Button asChild className="mt-auto w-full">
+            <a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Tanya via WhatsApp</a>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }

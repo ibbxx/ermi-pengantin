@@ -9,6 +9,11 @@ import DressCard from '@/components/DressCard';
 import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import EmptyState from '@/components/ui/EmptyState';
 import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
+import Breadcrumb from '@/components/Breadcrumb';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -58,7 +63,7 @@ export default function DressDetail({ params }: PageProps) {
   };
 
   const handleWhatsAppConsult = () => {
-    const text = encodeURIComponent(`Halo Elika Wedding, saya tertarik konsultasi busana "${dress.name}".`);
+    const text = encodeURIComponent(`Halo Ermi Pengantin, saya tertarik konsultasi busana "${dress.name}".`);
     window.open(`https://wa.me/${settings.whatsappAdmin}?text=${text}`, '_blank');
   };
 
@@ -74,24 +79,27 @@ export default function DressDetail({ params }: PageProps) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
-      {/* Back Button */}
-      <div>
+      {/* Breadcrumb & Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Breadcrumb customLastLabel={dress.name} />
         <Link
           href="/dresses"
-          className="inline-flex items-center text-xs font-bold text-stone-600 hover:text-gold-dark gap-1"
+          className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-foreground gap-1 transition-colors duration-200"
         >
-          <ArrowLeft className="h-4 w-4" /> Kembali ke Katalog Busana
+          <ArrowLeft className="size-3.5" /> Kembali ke Katalog
         </Link>
       </div>
 
+      <Separator />
+
       {/* Product Content Block */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4">
         
         {/* LEFT COLUMN: Gallery */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="aspect-[3/4] bg-stone-100 rounded-3xl overflow-hidden shadow-md">
+          <div className="aspect-[3/4] bg-muted/25 rounded-3xl overflow-hidden shadow-sm border border-border">
             {dress.images[selectedImageIdx] || dress.images[0] ? (
               <img
                 src={dress.images[selectedImageIdx] || dress.images[0]}
@@ -105,13 +113,13 @@ export default function DressDetail({ params }: PageProps) {
           
           {/* Thumbnails */}
           {dress.images.length > 1 && (
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2.5">
               {dress.images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImageIdx(idx)}
-                  className={`w-20 aspect-[3/4] bg-stone-100 rounded-xl overflow-hidden border-2 transition-all ${
-                    selectedImageIdx === idx ? 'border-gold shadow-sm' : 'border-transparent'
+                  className={`w-16 aspect-[3/4] bg-muted/20 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                    selectedImageIdx === idx ? 'border-primary shadow-sm' : 'border-transparent hover:border-muted-foreground/30'
                   }`}
                 >
                   {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <ImagePlaceholder label="" />}
@@ -123,59 +131,65 @@ export default function DressDetail({ params }: PageProps) {
 
         {/* MIDDLE COLUMN: Details & Description */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-gold-dark uppercase tracking-wider bg-champagne px-3 py-1 rounded-md">
-              {dress.category}
-            </span>
-            <h1 className="text-3xl font-serif font-bold text-charcoal">{dress.name}</h1>
+          <div className="space-y-3">
+            <div>
+              <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-[10px] uppercase font-bold px-2 py-0.5">
+                {dress.category}
+              </Badge>
+            </div>
+            <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">{dress.name}</h1>
             
             {/* Rating */}
-            <div className="flex items-center space-x-1 pt-1">
+            <div className="flex items-center space-x-1">
               <div className="flex items-center">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-gold text-gold" />
+                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                 ))}
               </div>
-              <span className="text-xs font-bold text-charcoal pl-1">{dress.rating}</span>
-              <span className="text-xs text-stone-muted">({dress.reviewCount} ulasan pelanggan)</span>
+              <span className="text-xs font-bold text-foreground pl-1">{dress.rating}</span>
+              <span className="text-xs text-muted-foreground">({dress.reviewCount} ulasan pelanggan)</span>
             </div>
           </div>
 
-          <div className="prose prose-sm text-stone-600 leading-relaxed space-y-4">
-            <h3 className="font-serif font-bold text-base text-charcoal">Deskripsi Busana</h3>
-            <p className="text-xs">{dress.description}</p>
+          <Separator />
+
+          <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
+            <h3 className="font-serif font-bold text-sm text-foreground">Deskripsi Busana</h3>
+            <p>{dress.description}</p>
           </div>
 
-          <div className="border-t border-gold-light/20 pt-4 space-y-3">
-            <h3 className="font-serif font-bold text-base text-charcoal">Spesifikasi Detail</h3>
+          <Separator />
+
+          <div className="space-y-3">
+            <h3 className="font-serif font-bold text-sm text-foreground">Spesifikasi Detail</h3>
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-ivory p-3 rounded-xl border border-gold-light/10">
-                <span className="text-stone-400 block text-[10px] uppercase">Bahan Utama</span>
-                <span className="font-bold text-charcoal">{dress.material}</span>
+              <div className="bg-card p-3.5 rounded-2xl border border-border shadow-xs">
+                <span className="text-muted-foreground block text-[9px] uppercase tracking-wider font-semibold">Bahan Utama</span>
+                <span className="font-bold text-foreground mt-0.5 block">{dress.material}</span>
               </div>
-              <div className="bg-ivory p-3 rounded-xl border border-gold-light/10">
-                <span className="text-stone-400 block text-[10px] uppercase">Durasi Sewa</span>
-                <span className="font-bold text-charcoal">{dress.rentalDurationDays} Hari (3 x 24 Jam)</span>
+              <div className="bg-card p-3.5 rounded-2xl border border-border shadow-xs">
+                <span className="text-muted-foreground block text-[9px] uppercase tracking-wider font-semibold">Durasi Sewa</span>
+                <span className="font-bold text-foreground mt-0.5 block">{dress.rentalDurationDays} Hari</span>
               </div>
             </div>
           </div>
 
           {/* Rental Terms & Conditions */}
-          <div className="bg-ivory p-5 rounded-2xl border border-gold-light/20 space-y-3">
-            <h4 className="font-serif font-bold text-sm text-charcoal flex items-center gap-1.5">
-              <Shield className="h-4.5 w-4.5 text-gold-dark" /> Ketentuan Pengambilan & Fitting
+          <div className="bg-secondary/20 p-5 rounded-2xl border border-border/60 space-y-3">
+            <h4 className="font-serif font-bold text-xs text-foreground flex items-center gap-1.5">
+              <Shield className="h-4 w-4 text-primary shrink-0" /> Ketentuan Pengambilan & Fitting
             </h4>
-            <ul className="space-y-1.5 text-[11px] text-stone-600">
+            <ul className="space-y-1.5 text-[11px] text-muted-foreground leading-normal">
               <li className="flex items-start gap-1.5">
-                <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <span>Fitting gratis di butik H-7 setelah konfirmasi booking.</span>
               </li>
               <li className="flex items-start gap-1.5">
-                <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <span>Pengembalian H+3 paling lambat pukul 18.00 WIB.</span>
               </li>
               <li className="flex items-start gap-1.5">
-                <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <span>Deposit Jaminan dikembalikan 100% setelah pengecekan busana.</span>
               </li>
             </ul>
@@ -184,32 +198,32 @@ export default function DressDetail({ params }: PageProps) {
 
         {/* RIGHT COLUMN: Sticky Booking & Calendar */}
         <div className="lg:col-span-3">
-          <div className="bg-white p-6 rounded-3xl border border-gold-light/25 shadow-lg space-y-6 lg:sticky lg:top-24">
+          <Card className="border-border/60 shadow-lg p-6 space-y-6 lg:sticky lg:top-24">
             
             {/* Price Box */}
-            <div className="bg-ivory-light p-4 rounded-2xl border border-gold-light/10">
-              <span className="text-stone-500 text-xs block">Biaya Sewa 3 Hari</span>
-              <span className="text-2xl font-extrabold text-gold-dark block">
+            <div className="bg-secondary/15 p-4 rounded-2xl border border-border/40">
+              <span className="text-muted-foreground text-xs block">Biaya Sewa 3 Hari</span>
+              <span className="text-2xl font-black text-primary block mt-0.5">
                 {formatPrice(dress.price)}
               </span>
-              <div className="flex justify-between items-center text-[10px] text-stone-500 border-t border-gold-light/10 mt-2.5 pt-2">
+              <div className="flex justify-between items-center text-[10px] text-muted-foreground border-t border-border/40 mt-3 pt-2">
                 <span>Jaminan (Refundable):</span>
-                <span className="font-bold text-charcoal">{formatPrice(dress.deposit)}</span>
+                <span className="font-bold text-foreground">{formatPrice(dress.deposit)}</span>
               </div>
             </div>
 
             {/* Select Size */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-charcoal block">Pilih Ukuran:</label>
+              <label className="text-xs font-semibold text-foreground block">Pilih Ukuran:</label>
               <div className="flex gap-2">
                 {dress.sizes.map((size) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`h-9 w-9 text-xs font-bold rounded-xl border flex items-center justify-center transition-all ${
+                    className={`h-9 w-9 text-xs font-bold rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                       selectedSize === size
-                        ? 'bg-gold border-gold text-white shadow-sm'
-                        : 'bg-white border-stone-200 text-charcoal hover:border-gold-light'
+                        ? 'bg-primary border-primary text-primary-foreground shadow-sm'
+                        : 'bg-background border-border text-foreground hover:border-primary/50'
                     }`}
                   >
                     {size}
@@ -220,16 +234,16 @@ export default function DressDetail({ params }: PageProps) {
 
             {/* Select Color */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-charcoal block">Pilih Warna:</label>
+              <label className="text-xs font-semibold text-foreground block">Pilih Warna:</label>
               <div className="flex flex-wrap gap-2">
                 {dress.colors.map((color) => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                       selectedColor === color
-                        ? 'bg-gold border-gold text-white shadow-sm'
-                        : 'bg-white border-stone-200 text-charcoal hover:border-gold-light'
+                        ? 'bg-primary border-primary text-primary-foreground shadow-sm'
+                        : 'bg-background border-border text-foreground hover:border-primary/50'
                     }`}
                   >
                     {color}
@@ -240,46 +254,48 @@ export default function DressDetail({ params }: PageProps) {
 
             {/* Select Date & Calendar Popover */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-charcoal block">Pilih Tanggal Acara:</label>
+              <label className="text-xs font-semibold text-foreground block">Pilih Tanggal Acara:</label>
               <AvailabilityCalendar
                 bookedDates={[]}
                 selectedDate={selectedDate}
                 onChange={setSelectedDate}
               />
               {selectedDate && (
-                <div className="text-[11px] text-emerald-600 font-semibold mt-1">
+                <div className="text-[11px] text-emerald-600 font-semibold mt-1 bg-emerald-50/50 border border-emerald-100 p-2 rounded-xl text-center">
                   Tanggal dipilih: {selectedDate}
                 </div>
               )}
             </div>
 
             {/* Book & WhatsApp Buttons */}
-            <div className="space-y-3">
-              <button
+            <div className="space-y-2.5">
+              <Button
                 onClick={handleBooking}
-                className="w-full py-3 bg-gold hover:bg-gold-dark text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-1.5"
+                className="w-full h-11 text-xs uppercase tracking-wider font-bold shadow-md hover:shadow-lg transition-all"
               >
                 Booking Busana
-              </button>
-              <button
+              </Button>
+              
+              <Button
                 onClick={handleWhatsAppConsult}
-                className="w-full py-3 border border-stone-200 text-stone-700 rounded-xl text-xs font-semibold hover:bg-stone-50 transition-colors flex items-center justify-center gap-1.5"
+                variant="outline"
+                className="w-full h-11 text-xs font-semibold"
               >
-                <MessageCircle className="h-4 w-4 text-emerald-600" />
-                <span>Tanya Admin Butik</span>
-              </button>
+                <MessageCircle className="h-4 w-4 text-emerald-600 mr-1.5 shrink-0" />
+                Tanya Admin Butik
+              </Button>
             </div>
 
-          </div>
+          </Card>
         </div>
 
       </div>
 
       {/* Similar Dresses Section */}
       {similarDresses.length > 0 && (
-        <div className="border-t border-gold-light/20 pt-12 space-y-8">
-          <h2 className="text-2xl font-serif font-bold text-charcoal">Rekomendasi Busana Serupa</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="border-t border-border pt-12 space-y-6">
+          <h2 className="text-2xl font-serif font-bold text-foreground">Rekomendasi Serupa</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {similarDresses.map((item) => (
               <DressCard key={item.id} dress={item} />
             ))}

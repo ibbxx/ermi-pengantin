@@ -1,96 +1,58 @@
 'use client';
 
 import Link from 'next/link';
-import { Check, Info, Award } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { WeddingPackage } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 interface PackageCardProps {
   pkg: WeddingPackage;
 }
 
+const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  minimumFractionDigits: 0,
+}).format(price);
+
 export default function PackageCard({ pkg }: PackageCardProps) {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   return (
-    <div
-      className={`bg-white rounded-3xl overflow-hidden transition-all duration-300 flex flex-col relative h-full border ${
-        pkg.isPopular
-          ? 'ring-2 ring-gold border-transparent shadow-xl scale-105 md:scale-[1.03] z-10'
-          : 'border-gold-light/20 shadow-md hover:shadow-lg'
-      }`}
-    >
-      {/* Popular Banner */}
-      {pkg.isPopular && (
-        <div className="bg-gold text-white text-xs font-semibold text-center py-1.5 uppercase tracking-wider flex items-center justify-center gap-1">
-          <Award className="h-4 w-4" /> Paket Terlaris
+    <Card className="h-full gap-0 py-0 ring-foreground/10">
+      <CardHeader className="p-6 pb-5">
+        <div className="mb-5 flex h-6 items-center justify-between">
+          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Paket Ermi Pengantin</span>
+          {pkg.isPopular && <Badge>Paling diminati</Badge>}
         </div>
-      )}
+        <CardTitle className="font-heading text-3xl font-normal">{pkg.name}</CardTitle>
+        <p className="mt-3 text-2xl font-semibold tracking-tight">{formatPrice(pkg.price)}</p>
+        <p className="text-xs text-muted-foreground">DP mulai {formatPrice(pkg.depositRequired)}</p>
+      </CardHeader>
 
-      {/* Package Header */}
-      <div className="p-6 text-center bg-gradient-to-b from-ivory to-white border-b border-gold-light/10">
-        <h3 className="font-serif font-bold text-2xl text-charcoal mb-2">{pkg.name}</h3>
-        <div className="text-3xl font-extrabold text-gold-dark mb-1">
-          {formatPrice(pkg.price)}
-        </div>
-        <div className="text-[11px] text-stone-500 flex items-center justify-center gap-1">
-          <Info className="h-3 w-3 text-gold-dark" /> DP Minimum: {formatPrice(pkg.depositRequired)}
-        </div>
-      </div>
+      <Separator />
 
-      {/* Inclusions & Features */}
-      <div className="p-6 flex-grow space-y-6">
-        {/* Core items (Baju, Makeup, Dekor) */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-charcoal-light">Inklusi Utama:</h4>
-          <div className="bg-ivory-light p-4 rounded-xl space-y-2.5 text-xs border border-gold-light/10">
-            <p className="flex justify-between">
-              <span className="text-stone-500 font-medium">Baju Pengantin:</span>
-              <span className="font-bold text-charcoal">{pkg.dressesIncluded} Pasang Baju</span>
-            </p>
-            <p className="flex flex-col">
-              <span className="text-stone-500 font-medium mb-0.5">Makeup:</span>
-              <span className="font-bold text-charcoal leading-relaxed">{pkg.makeupIncluded.join(', ')}</span>
-            </p>
-            <p className="flex flex-col">
-              <span className="text-stone-500 font-medium mb-0.5">Dekorasi:</span>
-              <span className="font-bold text-charcoal leading-relaxed">{pkg.decorIncluded}</span>
-            </p>
-          </div>
-        </div>
+      <CardContent className="flex flex-1 flex-col p-6">
+        <dl className="mb-6 grid gap-3 text-sm">
+          <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Busana</dt><dd className="text-right font-medium">{pkg.dressesIncluded} pasang</dd></div>
+          <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Makeup</dt><dd className="max-w-[65%] text-right font-medium">{pkg.makeupIncluded.join(', ')}</dd></div>
+          <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Dekorasi</dt><dd className="max-w-[65%] text-right font-medium">{pkg.decorIncluded}</dd></div>
+        </dl>
+        <Separator />
+        <ul className="mt-6 space-y-3">
+          {pkg.features.slice(0, 5).map((feature) => (
+            <li key={feature} className="flex items-start gap-2.5 text-sm leading-5 text-muted-foreground">
+              <Check className="mt-0.5 size-4 shrink-0 text-foreground" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
 
-        {/* Feature List */}
-        <div className="space-y-2.5">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-charcoal-light">Fasilitas Tambahan:</h4>
-          <ul className="space-y-2">
-            {pkg.features.map((feature, i) => (
-              <li key={i} className="flex items-start text-xs text-stone-600 gap-2">
-                <Check className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Footer / CTA */}
-      <div className="p-6 bg-gradient-to-t from-ivory to-white border-t border-gold-light/10 mt-auto">
-        <Link
-          href={`/booking?packageId=${pkg.id}`}
-          className={`w-full block text-center py-3 text-xs uppercase tracking-wider font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg ${
-            pkg.isPopular
-              ? 'bg-gold hover:bg-gold-dark text-white'
-              : 'bg-charcoal hover:bg-charcoal-light text-white'
-          }`}
-        >
-          Pilih Paket
-        </Link>
-      </div>
-    </div>
+      <CardFooter className="border-t bg-transparent p-4">
+        <Button asChild className="w-full" size="lg"><Link href={`/booking?packageId=${pkg.id}`}>Pilih paket</Link></Button>
+      </CardFooter>
+    </Card>
   );
 }

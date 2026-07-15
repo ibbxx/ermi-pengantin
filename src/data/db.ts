@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Dress, MakeupPackage, DecorPackage, WeddingPackage, Testimonial, Gallery, Booking, SystemSettings } from '@/types';
 import { supabase } from '@/lib/supabase';
 
@@ -14,13 +14,22 @@ const EMPTY_BOOKINGS: Booking[] = [];
 
 // Default settings
 const DEFAULT_SETTINGS: SystemSettings = {
-  shopName: 'Elika Wedding Organizer & Atelier',
+  shopName: 'Ermi Pengantin',
   whatsappAdmin: '6281234567890',
-  emailAdmin: 'info@elikawedding.com',
+  emailAdmin: '',
   minDpPercent: 30,
   transportBase: 150000,
   address: 'Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730',
-  heroImage: ''
+  heroImage: '',
+  serviceDressImage: '',
+  serviceMakeupImage: '',
+  serviceDecorImage: '',
+  tfEnabled: false,
+  tfBankName: '',
+  tfAccountNumber: '',
+  tfAccountHolder: '',
+  qrisEnabled: false,
+  qrisImage: ''
 };
 
 // ==========================================
@@ -61,11 +70,11 @@ function mapMakeupFromDb(row: any): MakeupPackage {
 function mapDecorFromDb(row: any): DecorPackage {
   return {
     id: row.id,
+    decorType: row.decor_type === 'item' ? 'item' : 'package',
     name: row.name,
     theme: row.theme,
     price: row.price,
     description: row.description || '',
-    venueSize: row.venue_size || '',
     features: row.features || [],
     images: row.images || []
   };
@@ -128,12 +137,13 @@ function mapBookingFromDb(row: any): Booking {
     paymentMethod: row.payment_method,
     paymentStatus: row.payment_status as any,
     bookingStatus: row.booking_status as any,
+    paymentProof: row.payment_proof || undefined,
     createdAt: row.created_at
   };
 }
 
 function mapBookingToDb(b: Booking): any {
-  return {
+  const row: any = {
     id: b.id,
     invoice_number: b.invoiceNumber,
     customer_id: b.customerId,
@@ -156,17 +166,33 @@ function mapBookingToDb(b: Booking): any {
     booking_status: b.bookingStatus,
     created_at: b.createdAt
   };
+  if (b.paymentProof !== undefined) {
+    row.payment_proof = b.paymentProof;
+  }
+  return row;
 }
 
 function mapSettingsFromDb(row: any): SystemSettings {
+  const storedShopName = String(row.shop_name || '');
+  const storedEmail = String(row.email_admin || '');
+
   return {
-    shopName: row.shop_name,
+    shopName: /elika/i.test(storedShopName) ? DEFAULT_SETTINGS.shopName : storedShopName || DEFAULT_SETTINGS.shopName,
     whatsappAdmin: row.whatsapp_admin,
-    emailAdmin: row.email_admin,
+    emailAdmin: /elika/i.test(storedEmail) ? DEFAULT_SETTINGS.emailAdmin : storedEmail,
     minDpPercent: row.min_dp_percent,
     transportBase: row.transport_base,
     address: row.address,
-    heroImage: row.hero_image || ''
+    heroImage: row.hero_image || '',
+    serviceDressImage: row.service_dress_image || '',
+    serviceMakeupImage: row.service_makeup_image || '',
+    serviceDecorImage: row.service_decor_image || '',
+    tfEnabled: !!row.tf_enabled,
+    tfBankName: row.tf_bank_name || '',
+    tfAccountNumber: row.tf_account_number || '',
+    tfAccountHolder: row.tf_account_holder || '',
+    qrisEnabled: !!row.qris_enabled,
+    qrisImage: row.qris_image || ''
   };
 }
 
@@ -272,11 +298,11 @@ export const db = {
     if (decorations.length > 0) {
       const rows = decorations.map(d => ({
         id: d.id,
+        decor_type: d.decorType,
         name: d.name,
         theme: d.theme,
         price: d.price,
         description: d.description,
-        venue_size: d.venueSize,
         features: d.features,
         images: d.images
       }));
@@ -387,7 +413,7 @@ export const db = {
     const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
     if (error) {
       console.error('Failed to get bookings:', error);
-      return EMPTY_BOOKINGS;
+      throw error;
     }
     return (data || []).map(mapBookingFromDb);
   },
@@ -422,6 +448,28 @@ export const db = {
       throw error;
     }
   },
+  async updateBooking(booking: Booking): Promise<Booking> {
+    const row = mapBookingToDb(booking);
+    row.payment_proof = booking.paymentProof ?? null;
+    const { data, error } = await supabase
+      .from('bookings')
+      .update(row)
+      .eq('id', booking.id)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('Failed to update booking:', error);
+      throw error;
+    }
+    return mapBookingFromDb(data);
+  },
+  async deleteBooking(id: string): Promise<void> {
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (error) {
+      console.error('Failed to delete booking:', error);
+      throw error;
+    }
+  },
 
   // --- Settings ---
   async getSettings(): Promise<SystemSettings> {
@@ -441,7 +489,16 @@ export const db = {
       min_dp_percent: settings.minDpPercent,
       transport_base: settings.transportBase,
       address: settings.address,
-      hero_image: settings.heroImage
+      hero_image: settings.heroImage,
+      service_dress_image: settings.serviceDressImage,
+      service_makeup_image: settings.serviceMakeupImage,
+      service_decor_image: settings.serviceDecorImage,
+      tf_enabled: settings.tfEnabled,
+      tf_bank_name: settings.tfBankName,
+      tf_account_number: settings.tfAccountNumber,
+      tf_account_holder: settings.tfAccountHolder,
+      qris_enabled: settings.qrisEnabled,
+      qris_image: settings.qrisImage
     };
     const { error } = await supabase.from('system_settings').upsert(row);
     if (error) {
@@ -528,24 +585,99 @@ export function useTestimonials() {
 
 export function useBookings() {
   const [bookings, setBookings] = useState<Booking[]>(EMPTY_BOOKINGS);
-  useEffect(() => {
-    db.getBookings().then(setBookings);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      setBookings(await db.getBookings());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Gagal memuat data booking.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    db.getBookings()
+      .then((loaded) => {
+        if (active) setBookings(loaded);
+      })
+      .catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : 'Gagal memuat data booking.');
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
   const updateBookings = (newBookings: Booking[]) => {
     setBookings(newBookings);
-    db.saveBookings(newBookings);
+    void db.saveBookings(newBookings);
   };
-  return [bookings, updateBookings] as const;
+
+  const updateBooking = useCallback(async (booking: Booking) => {
+    setError(null);
+    try {
+      const saved = await db.updateBooking(booking);
+      setBookings((current) => current.map((item) => item.id === saved.id ? saved : item));
+      return saved;
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Gagal memperbarui booking.';
+      setError(message);
+      throw cause;
+    }
+  }, []);
+
+  const cancelBooking = useCallback(async (id: string) => {
+    const current = bookings.find((item) => item.id === id);
+    if (!current) throw new Error('Booking tidak ditemukan.');
+    return updateBooking({ ...current, bookingStatus: 'cancelled' });
+  }, [bookings, updateBooking]);
+
+  const removeBooking = useCallback(async (id: string) => {
+    setError(null);
+    try {
+      await db.deleteBooking(id);
+      setBookings((current) => current.filter((item) => item.id !== id));
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Gagal menghapus booking.';
+      setError(message);
+      throw cause;
+    }
+  }, []);
+
+  return [bookings, updateBookings, {
+    updateBooking,
+    cancelBooking,
+    deleteBooking: removeBooking,
+    refresh,
+    isLoading,
+    error,
+  }] as const;
+}
+
+export async function deleteBooking(id: string): Promise<void> {
+  await db.deleteBooking(id);
 }
 
 export function useSettings() {
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [isLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
-    db.getSettings().then(setSettings);
+    db.getSettings().then((loadedSettings) => {
+      setSettings(loadedSettings);
+      setIsLoaded(true);
+    });
   }, []);
   const updateSettings = async (newSettings: SystemSettings): Promise<void> => {
     await db.saveSettings(newSettings);
     setSettings(newSettings);
+    setIsLoaded(true);
   };
-  return [settings, updateSettings] as const;
+  return [settings, updateSettings, isLoaded] as const;
 }

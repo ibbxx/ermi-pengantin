@@ -11,12 +11,10 @@ import {
   Layers,
   Award,
   Users,
-  CreditCard,
   Image,
   Settings as SettingsIcon,
   LogOut,
   Bell,
-  UserCheck
 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
@@ -31,12 +29,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [isMounted, setIsMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
-    
     // Supabase Auth is the only source of truth for the admin session.
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
@@ -52,13 +47,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const sidebarLinks = [
     { name: 'Dashboard Overview', href: '/admin', icon: LayoutDashboard },
-    { name: 'Daftar Booking', href: '/admin/bookings', icon: Calendar },
+    { name: 'Booking & Transaksi', href: '/admin/bookings', icon: Calendar },
     { name: 'Kelola Baju & Busana', href: '/admin/dresses', icon: Scissors },
     { name: 'Layanan Makeup', href: '/admin/makeup', icon: Sparkles },
     { name: 'Tema Dekorasi', href: '/admin/decor', icon: Layers },
     { name: 'Paket Pernikahan', href: '/admin/packages', icon: Award },
     { name: 'Data Klien', href: '/admin/customers', icon: Users },
-    { name: 'Daftar Transaksi', href: '/admin/payments', icon: CreditCard },
     { name: 'Galeri Portofolio', href: '/admin/gallery', icon: Image },
     { name: 'Pengaturan Butik', href: '/admin/settings', icon: SettingsIcon },
   ];
@@ -78,7 +72,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
 
-  if (!isMounted) {
+  if (isLoggedIn === null) {
     return (
       <div className="min-h-screen bg-stone-100 flex items-center justify-center -mt-20">
         <div className="animate-pulse text-stone-500 font-serif text-sm">Memuat Panel Admin...</div>
@@ -99,8 +93,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="p-6 border-b border-stone-800">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-serif font-bold tracking-wide text-white">
-              Elika<span className="text-gold font-normal font-sans ml-1">&</span>
-              <span className="text-gold"> Admin</span>
+              Ermi Pengantin<span className="text-gold"> Admin</span>
             </span>
           </Link>
           <span className="text-[10px] text-stone-500 uppercase tracking-widest block mt-1 font-bold">Butik Management</span>
@@ -169,9 +162,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-grow p-6 md:p-8 overflow-y-auto">
+        <div className="flex-grow p-6 md:p-8 overflow-y-auto">
           {children}
-        </main>
+        </div>
       </div>
 
     </div>

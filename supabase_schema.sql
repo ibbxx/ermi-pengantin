@@ -65,6 +65,7 @@ CREATE POLICY "Allow authenticated full access to makeup_packages" ON public.mak
 -- 3. Create table for decor_packages
 CREATE TABLE IF NOT EXISTS public.decor_packages (
     id TEXT PRIMARY KEY,
+    decor_type TEXT NOT NULL DEFAULT 'package' CHECK (decor_type IN ('package', 'item')),
     name TEXT NOT NULL,
     theme TEXT NOT NULL,
     price INTEGER NOT NULL,
@@ -73,6 +74,25 @@ CREATE TABLE IF NOT EXISTS public.decor_packages (
     features TEXT[] NOT NULL DEFAULT '{}',
     images TEXT[] NOT NULL DEFAULT '{}'
 );
+
+-- Keep installations created before decor types aligned with the current catalog.
+ALTER TABLE public.decor_packages
+    ADD COLUMN IF NOT EXISTS decor_type TEXT NOT NULL DEFAULT 'package';
+
+UPDATE public.decor_packages
+SET decor_type = 'package'
+WHERE decor_type IS NULL OR decor_type NOT IN ('package', 'item');
+
+ALTER TABLE public.decor_packages
+    ALTER COLUMN decor_type SET DEFAULT 'package',
+    ALTER COLUMN decor_type SET NOT NULL;
+
+ALTER TABLE public.decor_packages
+    DROP CONSTRAINT IF EXISTS decor_packages_decor_type_check;
+
+ALTER TABLE public.decor_packages
+    ADD CONSTRAINT decor_packages_decor_type_check
+    CHECK (decor_type IN ('package', 'item'));
 
 ALTER TABLE public.decor_packages ENABLE ROW LEVEL SECURITY;
 
@@ -176,9 +196,11 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     payment_method TEXT NOT NULL,
     payment_status TEXT NOT NULL DEFAULT 'pending',
     booking_status TEXT NOT NULL DEFAULT 'pending',
+    payment_proof TEXT,
     created_at TEXT NOT NULL
 );
 
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS payment_proof TEXT;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public insert to bookings" ON public.bookings;
@@ -208,12 +230,34 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
     min_dp_percent INTEGER NOT NULL DEFAULT 30,
     transport_base INTEGER NOT NULL DEFAULT 0,
     address TEXT NOT NULL,
-    hero_image TEXT
+    hero_image TEXT,
+    service_dress_image TEXT,
+    service_makeup_image TEXT,
+    service_decor_image TEXT,
+    tf_enabled BOOLEAN NOT NULL DEFAULT false,
+    tf_bank_name TEXT NOT NULL DEFAULT '',
+    tf_account_number TEXT NOT NULL DEFAULT '',
+    tf_account_holder TEXT NOT NULL DEFAULT '',
+    qris_enabled BOOLEAN NOT NULL DEFAULT false,
+    qris_image TEXT NOT NULL DEFAULT ''
 );
 
--- Keep existing installations aligned when the table predates hero images.
+-- Keep existing installations aligned when the table predates newer columns.
 ALTER TABLE public.system_settings
     ADD COLUMN IF NOT EXISTS hero_image TEXT;
+
+ALTER TABLE public.system_settings
+    ADD COLUMN IF NOT EXISTS service_dress_image TEXT,
+    ADD COLUMN IF NOT EXISTS service_makeup_image TEXT,
+    ADD COLUMN IF NOT EXISTS service_decor_image TEXT;
+
+ALTER TABLE public.system_settings
+    ADD COLUMN IF NOT EXISTS tf_enabled BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS tf_bank_name TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS tf_account_number TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS tf_account_holder TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS qris_enabled BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS qris_image TEXT NOT NULL DEFAULT '';
 
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
@@ -230,12 +274,12 @@ CREATE POLICY "Allow authenticated full access to system_settings" ON public.sys
 -- Insert default system settings row if not exists
 INSERT INTO public.system_settings (id, shop_name, whatsapp_admin, email_admin, min_dp_percent, transport_base, address, hero_image)
 VALUES (
-    1, 
-    'Elika Wedding Organizer & Atelier', 
-    '6281234567890', 
-    'info@elikawedding.com', 
-    30, 
-    150000, 
-    'Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730', 
+    1,
+    'Ermi Pengantin',
+    '6281234567890',
+    '',
+    30,
+    150000,
+    'Jl. Kemang Raya No. 12, Mampang Prapatan, Jakarta Selatan, 12730',
     ''
 ) ON CONFLICT (id) DO NOTHING;
