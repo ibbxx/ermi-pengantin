@@ -72,55 +72,83 @@ export default function Home() {
   const featuredDresses = dresses.filter((dress) => dress.isPopular).slice(0, 3);
   return (
     <div className="pb-24">
-      {/* Mobile Hero (Option A: Immersive Background & Glassmorphic Card) */}
-      <section className="relative block md:hidden w-full h-[calc(100svh-4rem)] overflow-hidden border-b">
-        {/* Background Image */}
-        {settings.heroImage ? (
-          <Image 
-            src={settings.heroImage} 
-            alt="Karya pernikahan Ermi Pengantin" 
-            fill 
-            priority
-            sizes="100vw" 
-            className="object-cover -z-20" 
-          />
-        ) : (
-          <div className="absolute inset-0 bg-muted -z-20" />
-        )}
-        
-        {/* Soft elegant gradient overlays for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/80 -z-10" />
-
-        {/* Top Watermark Branding */}
-        <div className="absolute top-7 inset-x-0 flex flex-col items-center justify-center text-center">
-          <span className="font-heading text-2xl italic text-white tracking-widest">Ermi</span>
-          <span className="text-[7px] font-extrabold uppercase tracking-[0.35em] text-white/70 mt-0.5">Atelier</span>
-        </div>
-
-        {/* Bottom Floating Glassmorphic Card */}
-        <div className="absolute bottom-7 left-5 right-5 p-6 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/15 text-white shadow-2xl space-y-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-[8px] font-extrabold uppercase tracking-[0.25em] text-white/95">
-              <span className="h-[1px] w-4 bg-white/45" />
+      {/* Mobile Hero (Bespoke Editorial-Asymmetric) */}
+      <section className="block md:hidden border-b bg-background overflow-hidden">
+        <div className="px-6 py-12 space-y-9">
+          {/* Header Typography */}
+          <div className="space-y-3">
+            <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-primary/80">
               Busana · Rias · Dekorasi
-            </div>
-            <h1 className="font-heading text-2xl leading-tight tracking-tight text-white">
+            </span>
+            <h1 className="font-heading text-4xl leading-[1.08] tracking-tight text-foreground">
               Satu visi untuk hari pernikahan{' '}
-              <span className="font-serif italic text-amber-100/90 block mt-1 font-normal">
+              <span className="font-serif italic text-primary block mt-2 font-normal">
                 yang terasa milik Anda.
               </span>
             </h1>
           </div>
-          <p className="text-[10px] leading-relaxed text-white/80 max-w-xs">
-            Kami menyelaraskan seluruh detail agar hari pernikahan terasa utuh, personal, dan tetap tenang.
-          </p>
-          <div className="flex gap-2.5 pt-1">
-            <Button asChild size="sm" className="flex-grow h-9.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white text-black hover:bg-white/90">
-              <Link href="/booking">Mulai Konsultasi</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm" className="flex-grow h-9.5 rounded-full text-[9px] font-bold uppercase tracking-wider border-white/20 hover:bg-white/10 text-white">
-              <Link href="/dresses">Koleksi Gaun</Link>
-            </Button>
+
+          {/* Asymmetric Gallery Frame */}
+          <div className="relative w-full my-6 flex items-center justify-end">
+            <div className="relative w-[82%] aspect-[4/5]">
+              {/* Outer offset boundary line frame */}
+              <div className="absolute -inset-3 border border-primary/20 rounded-2xl -translate-x-3 translate-y-3 -z-10" />
+              
+              {/* Image Container with shadow and rounded styling */}
+              <div className="w-full h-full rounded-2xl overflow-hidden shadow-md border border-border/80 bg-muted relative">
+                {settings.heroImage ? (
+                  <Image 
+                    src={settings.heroImage} 
+                    alt="Karya pernikahan Ermi Pengantin" 
+                    fill 
+                    priority
+                    sizes="82vw" 
+                    className="object-cover" 
+                  />
+                ) : (
+                  <ImagePlaceholder label="Foto hero belum diatur" />
+                )}
+                {/* Subtle overlay badge */}
+                <div className="absolute bottom-3 left-3 bg-background/90 px-2 py-0.5 rounded border text-[8px] font-bold uppercase tracking-widest text-foreground">
+                  Atelier
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Paragraph & CTAs */}
+          <div className="space-y-6">
+            <p className="text-xs leading-relaxed text-muted-foreground max-w-sm">
+              Ceritakan rencana Anda. Kami menyelaraskan seluruh detail agar hari pernikahan terasa utuh, personal, dan tetap tenang.
+            </p>
+            <div className="flex gap-3">
+              <Button asChild size="lg" className="flex-grow rounded-none bg-foreground text-background hover:bg-foreground/90 font-bold uppercase tracking-wider text-[10px] h-11 px-5">
+                <Link href="/booking">Mulai Konsultasi</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="flex-grow rounded-none border-foreground hover:bg-foreground/5 text-foreground font-bold uppercase tracking-wider text-[10px] h-11 px-5">
+                <Link href="/dresses">Koleksi Gaun</Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Clean Numbered Service Index */}
+          <div className="border-t border-border/50 pt-8 space-y-4">
+            <span className="text-[9px] font-extrabold uppercase tracking-widest text-muted-foreground block">
+              Layanan Utama
+            </span>
+            <div className="divide-y divide-border/60">
+              {services.map((service) => (
+                <Link key={service.href} href={service.href} className="flex justify-between items-center py-4 group">
+                  <div className="flex items-baseline gap-4">
+                    <span className="font-mono text-[9px] text-muted-foreground/60">{service.number}</span>
+                    <span className="font-heading text-lg text-foreground group-hover:text-primary transition-colors">
+                      {service.title}
+                    </span>
+                  </div>
+                  <ArrowRight className="size-4 text-muted-foreground/45 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
