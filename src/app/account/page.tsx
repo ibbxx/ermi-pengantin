@@ -160,16 +160,18 @@ export default function CustomerDashboard() {
   };
 
   const getStatusConfig = (status: Booking['bookingStatus']) => {
-    const statusMap = {
+    const statusMap: Record<Booking['bookingStatus'], { label: string; variant: "outline" | "secondary" | "default" | "destructive"; classes: string }> = {
       pending: { label: 'Menunggu Verifikasi', variant: 'outline' as const, classes: 'border-amber-200 bg-amber-50/50 text-amber-800' },
+      submitted: { label: 'Diajukan', variant: 'outline' as const, classes: 'border-stone-200 bg-stone-50 text-stone-600' },
       confirmed: { label: 'Dikonfirmasi', variant: 'secondary' as const, classes: 'border-blue-200 bg-blue-50/50 text-blue-800' },
       paid: { label: 'Pembayaran Diterima', variant: 'default' as const, classes: 'border-emerald-200 bg-emerald-50/50 text-emerald-800' },
       fitting: { label: 'Tahap Fitting', variant: 'default' as const, classes: 'border-purple-200 bg-purple-50/50 text-purple-800' },
       ready: { label: 'Siap Diambil', variant: 'default' as const, classes: 'border-indigo-200 bg-indigo-50/50 text-indigo-800' },
       completed: { label: 'Selesai', variant: 'outline' as const, classes: 'border-stone-300 bg-stone-50 text-stone-700' },
+      declined: { label: 'Ditolak', variant: 'destructive' as const, classes: 'border-red-200 bg-red-50 text-red-700' },
       cancelled: { label: 'Dibatalkan', variant: 'destructive' as const, classes: 'border-red-200 bg-red-50 text-red-700' }
     };
-    return statusMap[status] || { label: status, variant: 'outline' as const, classes: 'border-stone-200 bg-stone-50 text-stone-600' };
+    return statusMap[status];
   };
 
   const getTimelineSteps = (status: Booking['bookingStatus']) => {
