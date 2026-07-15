@@ -56,16 +56,18 @@ export default function AdminDashboardOverview() {
   };
 
   const getStatusLabel = (status: Booking['bookingStatus']) => {
-    const maps = {
+    const maps: Record<Booking['bookingStatus'], string> = {
       pending: 'Pending',
+      submitted: 'Diajukan',
       confirmed: 'Confirmed',
       paid: 'Lunas/DP',
       fitting: 'Fitting',
       ready: 'Ready',
       completed: 'Selesai',
+      declined: 'Ditolak',
       cancelled: 'Batal'
     };
-    return maps[status] || status;
+    return maps[status];
   };
 
   return (

@@ -53,11 +53,13 @@ export interface WeddingPackage {
 
 export type BookingStatus =
   | 'pending'
+  | 'submitted'
   | 'confirmed'
   | 'paid'
   | 'fitting'
   | 'ready'
   | 'completed'
+  | 'declined'
   | 'cancelled';
 
 export interface Booking {
@@ -104,13 +106,24 @@ export interface Booking {
   additionalFees: string; // For display, transport or fitting changes
   depositRequired: string; // DP Amount
   totalAmount: string; // Total Amount
-  paymentType: 'dp' | 'full';
+  paymentType: PaymentType;
   paymentMethod: string; // 'va_bca' | 'va_mandiri' | 'gopay' | 'credit_card'
-  paymentStatus: 'pending' | 'paid' | 'failed';
+  paymentStatus: PaymentStatus;
   bookingStatus: BookingStatus;
   paymentProof?: string;
   createdAt: string;
 }
+
+export type PaymentType = 'dp' | 'full' | 'settlement' | 'pelunasan';
+export type PaymentStatus =
+  | 'not_due'
+  | 'awaiting_payment'
+  | 'under_review'
+  | 'partially_paid'
+  | 'paid'
+  | 'rejected'
+  | 'pending'
+  | 'failed';
 
 export interface Customer {
   id: string;
@@ -173,4 +186,28 @@ export interface SystemSettings {
   tfAccountHolder: string;
   qrisEnabled: boolean;
   qrisImage: string;
+}
+
+export type DressUnitStatus = 'ready' | 'maintenance' | 'retired';
+
+export interface BookingRequestInput {
+  customerName: string;
+  customerWhatsApp: string;
+  customerEmail?: string;
+  customerAddress?: string;
+  eventDate: string;
+  eventLocation: string;
+  eventType: 'akad' | 'resepsi' | 'prewedding' | 'lamaran';
+  notes?: string;
+  consent: boolean;
+  paymentType: 'dp' | 'full';
+  paymentMethod: string;
+  weddingPackageId?: string;
+  dressPreferences?: Array<{
+    dressId: string;
+    size?: string;
+    color?: string;
+  }>;
+  makeupId?: string;
+  decorId?: string;
 }
