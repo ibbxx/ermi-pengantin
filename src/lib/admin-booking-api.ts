@@ -58,6 +58,13 @@ export interface DressUnit {
   dresses?: { id: string; name: string };
 }
 
+export interface AdminDressOption {
+  id: string;
+  name: string;
+  sizes: string[];
+  colors: string[];
+}
+
 export async function adminFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Sesi admin berakhir. Silakan masuk kembali.');
