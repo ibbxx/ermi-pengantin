@@ -6,7 +6,7 @@ import {
   canTransitionBooking,
   normalizeWhatsApp,
   periodsOverlap,
-} from '../src/lib/booking-rules.ts';
+} from '../src/lib/booking-rules';
 
 test('normalisasi WhatsApp menghasilkan E.164 Indonesia yang konsisten', () => {
   assert.equal(normalizeWhatsApp('0812-3456-7890'), '6281234567890');
@@ -30,6 +30,19 @@ test('harga dan DP dihitung ulang dari katalog server', () => {
   assert.equal(estimate.additionalFees, 100_000);
   assert.equal(estimate.totalAmount, 1_600_000);
   assert.equal(estimate.depositRequired, 450_000);
+});
+
+test('DP paket memakai nominal katalog dan tidak boleh melampaui total', () => {
+  const estimate = calculateBookingEstimate({
+    customerName: 'Ayu', customerWhatsApp: '081234567890', eventDate: '2030-01-01',
+    eventLocation: 'Denpasar', eventType: 'resepsi', consent: true, weddingPackageId: 'package-1',
+  }, {
+    dresses: [], makeup: [], decor: [],
+    packages: [{ id: 'package-1', name: 'Paket Lengkap', price: 2_000_000, dressesIncluded: 1, makeupIncluded: [], decorIncluded: '', features: [], depositRequired: 3_000_000, isPopular: false }],
+  }, { minDpPercent: 30, transportBase: 100_000 });
+
+  assert.equal(estimate.totalAmount, 2_100_000);
+  assert.equal(estimate.depositRequired, 2_100_000);
 });
 
 test('transisi status dan pembayaran menolak lompatan yang tidak sah', () => {

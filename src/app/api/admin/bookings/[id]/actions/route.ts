@@ -41,13 +41,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (body.action === 'decline') {
       if (!canTransitionBooking(booking.booking_status, 'declined')) return Response.json({ error: 'Status tidak dapat ditolak.' }, { status: 409 });
-      await supabase.from('bookings').update({ booking_status: 'declined', payment_status: 'not_due', admin_notes: body.reason || null }).eq('id', id);
+      const { error } = await supabase.from('bookings').update({ booking_status: 'declined', payment_status: 'not_due', admin_notes: body.reason || null }).eq('id', id);
+      if (error) throw error;
       return Response.json({ ok: true });
     }
 
     if (body.action === 'status') {
       if (!canTransitionBooking(booking.booking_status, body.status)) return Response.json({ error: 'Transisi status tidak diizinkan.' }, { status: 409 });
-      await supabase.from('bookings').update({ booking_status: body.status }).eq('id', id);
+      const { error } = await supabase.from('bookings').update({ booking_status: body.status }).eq('id', id);
+      if (error) throw error;
       return Response.json({ ok: true });
     }
 
@@ -56,25 +58,29 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         .eq('id', body.submissionId).eq('booking_id', id).eq('status', 'under_review').single();
       if (error) throw error;
       const approved = body.decision === 'approve';
-      await supabase.from('payment_submissions').update({
+      const { error: reviewError } = await supabase.from('payment_submissions').update({
         status: approved ? 'approved' : 'rejected', reviewer_id: user.id,
         rejection_reason: approved ? null : body.rejectionReason?.trim() || 'Bukti belum dapat diverifikasi.',
         reviewed_at: new Date().toISOString(),
       }).eq('id', submission.id);
+      if (reviewError) throw reviewError;
 
-      const { data: approvedRows } = await supabase.from('payment_submissions').select('amount')
+      const { data: approvedRows, error: approvedError } = await supabase.from('payment_submissions').select('amount')
         .eq('booking_id', id).eq('status', 'approved');
+      if (approvedError) throw approvedError;
       const paid = (approvedRows || []).reduce((sum, item) => sum + Number(item.amount), 0);
-      const paymentStatus = approved
-        ? paid >= Number(booking.total_amount) ? 'paid' : 'partially_paid'
-        : 'rejected';
-      await supabase.from('bookings').update({ payment_status: paymentStatus }).eq('id', id);
+      const paymentStatus = paid >= Number(booking.total_amount)
+        ? 'paid'
+        : paid > 0 ? 'partially_paid' : approved ? 'partially_paid' : 'rejected';
+      const { error: paymentError } = await supabase.from('bookings').update({ payment_status: paymentStatus }).eq('id', id);
+      if (paymentError) throw paymentError;
       return Response.json({ paymentStatus, paidAmount: paid });
     }
 
     if (body.action === 'create_link') {
       const token = randomBytes(32).toString('base64url');
-      await supabase.from('bookings').update({ access_token_hash: hashAccessToken(token) }).eq('id', id);
+      const { error } = await supabase.from('bookings').update({ access_token_hash: hashAccessToken(token) }).eq('id', id);
+      if (error) throw error;
       const origin = new URL(request.url).origin;
       return Response.json({ accessUrl: `${origin}/api/customer/access/exchange?booking=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}` });
     }

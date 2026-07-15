@@ -102,15 +102,14 @@ export interface Booking {
   };
 
   notes?: string;
-  subtotal: string; // For display, can also be number
-  additionalFees: string; // For display, transport or fitting changes
-  depositRequired: string; // DP Amount
-  totalAmount: string; // Total Amount
+  subtotal: number;
+  additionalFees: number;
+  depositRequired: number;
+  totalAmount: number;
   paymentType: PaymentType;
   paymentMethod: string; // 'va_bca' | 'va_mandiri' | 'gopay' | 'credit_card'
   paymentStatus: PaymentStatus;
   bookingStatus: BookingStatus;
-  paymentProof?: string;
   createdAt: string;
 }
 
@@ -200,8 +199,6 @@ export interface BookingRequestInput {
   eventType: 'akad' | 'resepsi' | 'prewedding' | 'lamaran';
   notes?: string;
   consent: boolean;
-  paymentType: 'dp' | 'full';
-  paymentMethod: string;
   weddingPackageId?: string;
   dressPreferences?: Array<{
     dressId: string;

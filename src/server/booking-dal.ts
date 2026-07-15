@@ -30,12 +30,31 @@ function mapDress(row: Record<string, unknown>) {
 }
 
 export async function createBookingRequest(input: BookingRequestInput) {
+  if (!input || typeof input !== 'object') throw new Error('Data booking tidak valid.');
   if (!input.consent) throw new Error('Persetujuan pemrosesan data wajib dicentang.');
-  if (!input.customerName?.trim() || !input.eventDate || !input.eventLocation?.trim()) {
+  if (!input.customerName?.trim() || !input.customerWhatsApp?.trim() || !input.eventDate || !input.eventLocation?.trim()) {
     throw new Error('Nama, tanggal, dan lokasi acara wajib diisi.');
   }
-  if (input.eventDate < new Date().toISOString().slice(0, 10)) {
-    throw new Error('Tanggal acara tidak boleh berada di masa lalu.');
+  if (input.customerName.trim().length > 120 || input.eventLocation.trim().length > 500
+    || (input.customerAddress?.length || 0) > 1_000 || (input.notes?.length || 0) > 2_000) {
+    throw new Error('Data booking melebihi batas karakter.');
+  }
+  if (input.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.customerEmail.trim())) {
+    throw new Error('Alamat email tidak valid.');
+  }
+  if (!['akad', 'resepsi', 'prewedding', 'lamaran'].includes(input.eventType)) {
+    throw new Error('Jenis acara tidak valid.');
+  }
+  const tomorrow = new Date();
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.eventDate) || input.eventDate < tomorrow.toISOString().slice(0, 10)) {
+    throw new Error('Tanggal acara minimal satu hari dari sekarang.');
+  }
+  if (input.weddingPackageId && (input.dressPreferences?.length || input.makeupId || input.decorId)) {
+    throw new Error('Paket lengkap tidak dapat digabung dengan layanan satuan.');
+  }
+  if ((input.dressPreferences?.length || 0) > 10) {
+    throw new Error('Maksimal 10 preferensi busana per permintaan.');
   }
 
   const customerWhatsApp = normalizeWhatsApp(input.customerWhatsApp);
