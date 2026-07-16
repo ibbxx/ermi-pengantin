@@ -14,6 +14,14 @@ export default function AvailabilityCalendar({ bookedDates, selectedDate, onChan
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
 
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const isPast = (dateStr: string) => {
+    return dateStr < todayStr;
+  };
+
+  const isCurrentOrPastMonth = year < today.getFullYear() || (year === today.getFullYear() && month <= today.getMonth());
+
   const months = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -30,6 +38,7 @@ export default function AvailabilityCalendar({ bookedDates, selectedDate, onChan
   const dayNumbers = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const handlePrevMonth = () => {
+    if (isCurrentOrPastMonth) return;
     if (month === 0) {
       setMonth(11);
       setYear(year - 1);
@@ -60,7 +69,7 @@ export default function AvailabilityCalendar({ bookedDates, selectedDate, onChan
     const formattedDay = String(day).padStart(2, '0');
     const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
 
-    if (!isBooked(dateStr)) {
+    if (!isBooked(dateStr) && !isPast(dateStr)) {
       onChange(dateStr);
     }
   };
@@ -77,12 +86,15 @@ export default function AvailabilityCalendar({ bookedDates, selectedDate, onChan
         </div>
         <div className="flex space-x-1.5">
           <button
+            type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 rounded-lg border border-gold-light/20 hover:bg-ivory text-charcoal-light transition-colors"
+            disabled={isCurrentOrPastMonth}
+            className="p-1.5 rounded-lg border border-gold-light/20 hover:bg-ivory text-charcoal-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
+            type="button"
             onClick={handleNextMonth}
             className="p-1.5 rounded-lg border border-gold-light/20 hover:bg-ivory text-charcoal-light transition-colors"
           >
@@ -113,17 +125,21 @@ export default function AvailabilityCalendar({ bookedDates, selectedDate, onChan
           const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
           const booked = isBooked(dateStr);
           const selected = isSelected(dateStr);
+          const past = isPast(dateStr);
 
           return (
             <button
               key={`day-${day}`}
+              type="button"
               onClick={() => handleDateClick(day)}
-              disabled={booked}
+              disabled={booked || past}
               className={`aspect-square text-xs font-semibold rounded-lg flex items-center justify-center transition-all ${
                 selected
                   ? 'bg-gold text-white scale-105 shadow-sm'
                   : booked
                   ? 'bg-red-50 text-red-300 line-through cursor-not-allowed'
+                  : past
+                  ? 'bg-stone-50 text-stone-300 cursor-not-allowed'
                   : 'hover:bg-gold-light/20 text-charcoal'
               }`}
             >

@@ -8,8 +8,30 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
     if (error) throw error;
 
+    const packageIds = [...new Set((data || []).map((booking) => booking.services_selected?.weddingPackage?.id).filter(Boolean))] as string[];
+    const packageDressCounts = new Map<string, number>();
+    if (packageIds.length) {
+      const { data: packageRows, error: packageError } = await supabase.from('wedding_packages')
+        .select('id,dresses_included').in('id', packageIds);
+      if (packageError) throw packageError;
+      packageRows?.forEach((item) => packageDressCounts.set(item.id, Number(item.dresses_included || 0)));
+    }
+
     const bookings = await Promise.all((data || []).map(async (booking) => ({
       ...booking,
+      services_selected: booking.services_selected?.weddingPackage
+        ? {
+          ...booking.services_selected,
+          weddingPackage: {
+            ...booking.services_selected.weddingPackage,
+            dressesIncluded: Number(
+              booking.services_selected.weddingPackage.dressesIncluded
+              ?? packageDressCounts.get(booking.services_selected.weddingPackage.id)
+              ?? 0,
+            ),
+          },
+        }
+        : booking.services_selected,
       payment_submissions: await Promise.all((booking.payment_submissions || []).map(async (submission: Record<string, unknown>) => {
         const { data: signed } = await supabase.storage.from('payment-proofs-private')
           .createSignedUrl(String(submission.object_path), 300);

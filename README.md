@@ -2,6 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+For a new Supabase database, run the SQL files in this order:
+
+1. `supabase_schema.sql`
+2. `supabase_customer_journey_v2.sql`
+3. `supabase_simplify_booking_confirmation.sql`
+
+The third migration enables automatic dress-unit assignment during direct-booking confirmation and package-unit assignment during fitting.
+
 First, run the development server:
 
 ```bash

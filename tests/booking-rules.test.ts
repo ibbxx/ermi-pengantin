@@ -43,6 +43,7 @@ test('DP paket memakai nominal katalog dan tidak boleh melampaui total', () => {
 
   assert.equal(estimate.totalAmount, 2_100_000);
   assert.equal(estimate.depositRequired, 2_100_000);
+  assert.equal(estimate.servicesSelected.weddingPackage?.dressesIncluded, 1);
 });
 
 test('transisi status dan pembayaran menolak lompatan yang tidak sah', () => {

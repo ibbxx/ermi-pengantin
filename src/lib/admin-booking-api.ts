@@ -27,7 +27,7 @@ export interface AdminBooking {
     dresses?: Array<{ id: string; name: string; size: string; color: string; price: number }>;
     makeup?: { id: string; name: string; price: number };
     decor?: { id: string; name: string; price: number };
-    weddingPackage?: { id: string; name: string; price: number };
+    weddingPackage?: { id: string; name: string; price: number; dressesIncluded?: number };
   };
   notes?: string | null;
   subtotal: number;

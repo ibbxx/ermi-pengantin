@@ -5,7 +5,8 @@ import { requireAdmin } from '@/server/supabase-admin';
 import type { BookingStatus } from '@/types';
 
 type ActionBody =
-  | { action: 'confirm'; unitIds?: string[]; rentalStart: string; rentalEnd: string; additionalFees: number; totalAmount: number; depositRequired: number; paymentDueAt?: string }
+  | { action: 'confirm'; rentalStart: string; rentalEnd: string; additionalFees: number; totalAmount: number; depositRequired: number; paymentDueAt?: string }
+  | { action: 'assign_fitting_units'; unitIds: string[] }
   | { action: 'decline'; reason?: string }
   | { action: 'status'; status: BookingStatus }
   | { action: 'review_payment'; submissionId: string; decision: 'approve' | 'reject'; rejectionReason?: string }
@@ -21,10 +22,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       if (!body.rentalStart || !body.rentalEnd || body.rentalEnd < body.rentalStart) {
         return Response.json({ error: 'Periode sewa tidak valid.' }, { status: 400 });
       }
-      const { data, error } = await supabase.rpc('confirm_booking_with_units', {
+      const { data, error } = await supabase.rpc('confirm_booking', {
         p_booking_id: id,
         p_admin_id: user.id,
-        p_unit_ids: body.unitIds || [],
         p_rental_start: body.rentalStart,
         p_rental_end: body.rentalEnd,
         p_additional_fees: Math.max(0, Math.round(body.additionalFees)),
@@ -32,8 +32,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         p_deposit_required: Math.max(0, Math.round(body.depositRequired)),
         p_payment_due_at: body.paymentDueAt || null,
       });
-      if (error) throw error;
+      if (error) return rpcError(error.message);
       return Response.json({ booking: data });
+    }
+
+    if (body.action === 'assign_fitting_units') {
+      if (!Array.isArray(body.unitIds) || body.unitIds.some((unitId) => typeof unitId !== 'string')) {
+        return Response.json({ error: 'Pilihan unit fitting tidak valid.' }, { status: 400 });
+      }
+      const { data, error } = await supabase.rpc('assign_package_dress_units', {
+        p_booking_id: id,
+        p_admin_id: user.id,
+        p_unit_ids: body.unitIds,
+      });
+      if (error) return rpcError(error.message);
+      return Response.json({ assignments: data });
     }
 
     const { data: booking, error: bookingError } = await supabase.from('bookings').select('*').eq('id', id).single();
@@ -48,6 +61,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (body.action === 'status') {
       if (!canTransitionBooking(booking.booking_status, body.status)) return Response.json({ error: 'Transisi status tidak diizinkan.' }, { status: 409 });
+      const weddingPackage = booking.services_selected?.weddingPackage as { id?: string; dressesIncluded?: number } | undefined;
+      if (body.status === 'ready' && weddingPackage) {
+        let requiredUnits = Number(weddingPackage.dressesIncluded);
+        if (!Number.isFinite(requiredUnits)) {
+          const { data: packageRow } = await supabase.from('wedding_packages')
+            .select('dresses_included').eq('id', weddingPackage.id || '').maybeSingle();
+          requiredUnits = Number(packageRow?.dresses_included || 0);
+        }
+        if (booking.booking_status === 'confirmed' && requiredUnits > 0) {
+          return Response.json({ error: 'Booking paket harus masuk tahap fitting sebelum dinyatakan siap.' }, { status: 409 });
+        }
+        if (requiredUnits > 0) {
+          const { count, error: assignmentError } = await supabase.from('booking_dress_assignments')
+            .select('id', { count: 'exact', head: true }).eq('booking_id', id);
+          if (assignmentError) throw assignmentError;
+          if ((count || 0) !== requiredUnits) {
+            return Response.json({ error: `Pilih dan simpan ${requiredUnits} unit busana saat fitting sebelum booking dinyatakan siap.` }, { status: 409 });
+          }
+        }
+      }
       const { error } = await supabase.from('bookings').update({ booking_status: body.status }).eq('id', id);
       if (error) throw error;
       return Response.json({ ok: true });
@@ -90,4 +123,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const status = cause instanceof Error && 'status' in cause ? Number(cause.status) : 400;
     return Response.json({ error: cause instanceof Error ? cause.message : 'Aksi gagal diproses.' }, { status });
   }
+}
+
+function rpcError(message: string) {
+  const availabilityMarkers = ['BUSANA_TIDAK_TERSEDIA:', 'UNIT_FITTING_TIDAK_TERSEDIA:'];
+  const marker = availabilityMarkers.find((candidate) => message.includes(candidate));
+  if (marker) {
+    return Response.json({ error: message.slice(message.indexOf(marker) + marker.length).trim() }, { status: 409 });
+  }
+  return Response.json({ error: message }, { status: 400 });
 }
