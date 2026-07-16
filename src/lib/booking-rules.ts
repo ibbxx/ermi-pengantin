@@ -39,7 +39,7 @@ export interface BookingEstimate {
     dresses?: Array<{ id: string; name: string; size: string; color: string; price: number; image: string }>;
     makeup?: { id: string; name: string; price: number };
     decor?: { id: string; name: string; price: number };
-    weddingPackage?: { id: string; name: string; price: number };
+    weddingPackage?: { id: string; name: string; price: number; dressesIncluded: number };
   };
   subtotal: number;
   additionalFees: number;
@@ -58,7 +58,12 @@ export function calculateBookingEstimate(
   if (input.weddingPackageId) {
     const item = catalog.packages.find((candidate) => candidate.id === input.weddingPackageId);
     if (!item) throw new Error('Paket yang dipilih tidak tersedia.');
-    services.weddingPackage = { id: item.id, name: item.name, price: rupiah(item.price) };
+    services.weddingPackage = {
+      id: item.id,
+      name: item.name,
+      price: rupiah(item.price),
+      dressesIncluded: Math.max(0, Math.round(item.dressesIncluded)),
+    };
     subtotal = rupiah(item.price);
   } else {
     if (input.dressPreferences?.length) {
