@@ -98,12 +98,6 @@ export default function PackagesPage() {
                     <td key={pkg.id} className="p-4 md:p-5 text-center text-muted-foreground font-medium">{formatPrice(pkg.depositRequired)}</td>
                   ))}
                 </tr>
-                <tr className="hover:bg-secondary/5 transition-colors">
-                  <td className="p-4 md:p-5 font-semibold text-foreground">Fasilitas Tambahan</td>
-                  {packages.map((pkg) => (
-                    <td key={pkg.id} className="p-4 md:p-5 text-center text-muted-foreground font-medium">{pkg.features.join(', ') || '-'}</td>
-                  ))}
-                </tr>
               </tbody>
             </table>
           </div>
