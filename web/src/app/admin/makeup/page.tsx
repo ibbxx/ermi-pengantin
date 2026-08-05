@@ -135,14 +135,16 @@ export default function AdminMakeup() {
               </div>
               <p className="text-[11px] text-stone-500 leading-relaxed">{pkg.description}</p>
               
-              <div className="pt-2">
-                <span className="font-bold text-stone-400 block mb-1 uppercase text-[9px]">Fasilitas Termasuk:</span>
-                <ul className="list-disc pl-4 space-y-1 text-stone-600">
-                  {pkg.features.map((feat, i) => (
-                    <li key={i}>{feat}</li>
-                  ))}
-                </ul>
-              </div>
+              {pkg.features.length > 0 && (
+                <div className="pt-2">
+                  <span className="font-bold text-stone-400 block mb-1 uppercase text-[9px]">Fasilitas Termasuk:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-stone-600">
+                    {pkg.features.map((feat, i) => (
+                      <li key={i}>{feat}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 border-t border-stone-100 pt-4 mt-auto">
