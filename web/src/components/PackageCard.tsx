@@ -35,23 +35,18 @@ export default function PackageCard({ pkg }: PackageCardProps) {
 
       <CardContent className="flex flex-1 flex-col p-6">
         <dl className="mb-6 grid gap-3 text-sm">
-          <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Busana</dt><dd className="text-right font-medium">{pkg.dressesIncluded} pasang</dd></div>
           <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Makeup</dt><dd className="max-w-[65%] text-right font-medium">{pkg.makeupIncluded.join(', ')}</dd></div>
           <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Dekorasi</dt><dd className="max-w-[65%] text-right font-medium">{pkg.decorIncluded}</dd></div>
         </dl>
-        {pkg.features.length > 0 && (
-          <>
-            <Separator />
-            <ul className="mt-6 space-y-3">
-              {pkg.features.slice(0, 5).map((feature) => (
-                <li key={feature} className="flex items-start gap-2.5 text-sm leading-5 text-muted-foreground">
-                  <Check className="mt-0.5 size-4 shrink-0 text-foreground" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <Separator />
+        <ul className="mt-6 space-y-3">
+          {pkg.features.slice(0, 5).map((feature) => (
+            <li key={feature} className="flex items-start gap-2.5 text-sm leading-5 text-muted-foreground">
+              <Check className="mt-0.5 size-4 shrink-0 text-foreground" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
 
       <CardFooter className="border-t bg-transparent p-4">

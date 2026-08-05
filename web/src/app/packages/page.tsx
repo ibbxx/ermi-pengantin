@@ -21,7 +21,7 @@ export default function PackagesPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-      
+
       {/* Breadcrumb & Header */}
       <div className="space-y-2">
         <Breadcrumb />
@@ -75,12 +75,6 @@ export default function PackagesPage() {
                   ))}
                 </tr>
                 <tr className="hover:bg-secondary/5 transition-colors">
-                  <td className="p-4 md:p-5 font-semibold text-foreground">Gaun Pengantin</td>
-                  {packages.map((pkg) => (
-                    <td key={pkg.id} className="p-4 md:p-5 text-center text-muted-foreground font-medium">{pkg.dressesIncluded} pasang</td>
-                  ))}
-                </tr>
-                <tr className="hover:bg-secondary/5 transition-colors">
                   <td className="p-4 md:p-5 font-semibold text-foreground">Makeup</td>
                   {packages.map((pkg) => (
                     <td key={pkg.id} className="p-4 md:p-5 text-center text-muted-foreground font-medium">{pkg.makeupIncluded.join(', ') || '-'}</td>
@@ -96,6 +90,12 @@ export default function PackagesPage() {
                   <td className="p-4 md:p-5 font-semibold text-foreground">DP Minimum</td>
                   {packages.map((pkg) => (
                     <td key={pkg.id} className="p-4 md:p-5 text-center text-muted-foreground font-medium">{formatPrice(pkg.depositRequired)}</td>
+                  ))}
+                </tr>
+                <tr className="hover:bg-secondary/5 transition-colors">
+                  <td className="p-4 md:p-5 font-semibold text-foreground">Fasilitas Tambahan</td>
+                  {packages.map((pkg) => (
+                    <td key={pkg.id} className="p-4 md:p-5 text-center text-muted-foreground font-medium">{pkg.features.join(', ') || '-'}</td>
                   ))}
                 </tr>
               </tbody>

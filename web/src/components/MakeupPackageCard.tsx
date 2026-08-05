@@ -26,11 +26,9 @@ export default function MakeupPackageCard({ pkg }: MakeupPackageCardProps) {
         <h3 className="font-heading text-2xl">{pkg.name}</h3>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">{pkg.description}</p>
         <p className="mt-5 text-xl font-semibold">{formatPrice(pkg.price)}</p>
-        {pkg.features.length > 0 && (
-          <ul className="my-6 space-y-2.5 border-t pt-5">
-            {pkg.features.map((feature, index) => <li key={`${index}-${feature}`} className="flex gap-2 text-sm text-muted-foreground"><Check className="mt-0.5 size-4 shrink-0 text-foreground" />{feature}</li>)}
-          </ul>
-        )}
+        <ul className="my-6 space-y-2.5 border-t pt-5">
+          {pkg.features.map((feature, index) => <li key={`${index}-${feature}`} className="flex gap-2 text-sm text-muted-foreground"><Check className="mt-0.5 size-4 shrink-0 text-foreground" />{feature}</li>)}
+        </ul>
         <div className="mt-auto grid grid-cols-2 gap-2">
           <Button asChild variant="outline"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Konsultasi</a></Button>
           <Button asChild><Link href={`/booking?makeupId=${pkg.id}`}>Booking</Link></Button>

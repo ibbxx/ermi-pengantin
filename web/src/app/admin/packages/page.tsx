@@ -91,7 +91,7 @@ export default function AdminPackages() {
 
   return (
     <div className="space-y-6 text-xs">
-      
+
       {/* Header controls */}
       <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
         <div>
@@ -207,16 +207,6 @@ export default function AdminPackages() {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-semibold text-charcoal">Jumlah Gaun Termasuk</label>
-                  <input
-                    type="number"
-                    required
-                    value={dressesIncluded}
-                    onChange={(e) => setDressesIncluded(Number(e.target.value))}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold"
-                  />
-                </div>
 
                 <div className="flex items-center space-x-2 pt-5">
                   <input
@@ -254,6 +244,16 @@ export default function AdminPackages() {
                   />
                 </div>
 
+                <div className="col-span-2 space-y-1">
+                  <label className="font-semibold text-charcoal">Inklusi/Fasilitas Tambahan Lainnya (Pisahkan dengan koma)</label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={featuresInput}
+                    onChange={(e) => setFeaturesInput(e.target.value)}
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold resize-none"
+                  />
+                </div>
               </div>
 
               <div className="pt-2">
