@@ -254,16 +254,6 @@ export default function AdminPackages() {
                   />
                 </div>
 
-                <div className="col-span-2 space-y-1">
-                  <label className="font-semibold text-charcoal">Inklusi/Fasilitas Tambahan Lainnya (Pisahkan dengan koma)</label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={featuresInput}
-                    onChange={(e) => setFeaturesInput(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2 px-3 focus:outline-none focus:border-gold resize-none"
-                  />
-                </div>
               </div>
 
               <div className="pt-2">
