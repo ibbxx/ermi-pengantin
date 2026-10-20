@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Check, MessageCircle, Star } from 'lucide-react';
-import { useDresses, useGallery, usePackages, useSettings, useTestimonials } from '@/data/db';
+import { ArrowRight, Check, MessageCircle } from 'lucide-react';
+import { useDresses, useGallery, usePackages, useSettings } from '@/data/db';
 import DressCard from '@/components/DressCard';
 import PackageCard from '@/components/PackageCard';
 import ImagePlaceholder from '@/components/ui/ImagePlaceholder';
@@ -42,7 +42,6 @@ export default function Home() {
   const [dresses] = useDresses();
   const [packages] = usePackages();
   const [gallery] = useGallery();
-  const [testimonials] = useTestimonials();
   const [settings] = useSettings();
 
   const services = [
@@ -276,25 +275,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {testimonials.length > 0 && (
-        <section className="border-y bg-secondary/40 py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 className="mb-10 max-w-xl font-heading text-4xl tracking-tight">Yang dirasakan klien setelah semuanya selesai.</h2>
-            <div className="grid gap-8 md:grid-cols-3">
-              {testimonials.slice(0, 3).map((testimonial) => (
-                <blockquote key={testimonial.id} className="border-t border-foreground/20 pt-6">
-                  <div className="mb-5 flex gap-1" aria-label={`${testimonial.rating} dari 5 bintang`}>
-                    {Array.from({ length: testimonial.rating }).map((_, index) => <Star key={index} className="size-3.5 fill-accent text-accent" />)}
-                  </div>
-                  <p className="font-heading text-xl leading-8">“{testimonial.comment}”</p>
-                  <footer className="mt-6 text-sm text-muted-foreground"><span className="font-medium text-foreground">{testimonial.name}</span> · {testimonial.role}</footer>
-                </blockquote>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       <section className="mx-auto grid max-w-7xl gap-12 px-4 py-24 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
         <div>
